@@ -64,4 +64,4 @@ As this is a very early testing version of GDE, many bugs may occur. If the GDE 
 
 Suggestions for a better distribution of mutations (see source) is welcome.
 
-Created with Processing 2.2.1 processing.org
+Created with Processing 2.2.1 from processing.org
