@@ -16,4 +16,18 @@ The GDE level editor is intended for level creation to GDE. To get the modified 
 
 Both GDE and the GDE level editor come with two similar levels: level.gdat and level_old.gdat. You can use them as a template or start from scratch (see INSTRUCTIONS.md).
 
+<br></br>
+
+# Level corruption / recovery
+
+The level files (level.gdat) can be read and modified as normal text files. If your level corrupts, here are some options to what you can do about it:
+
+a) Redownload / -extract the (path to the main folder)/data/level.gdat file (or all the files)
+
+b) Delete the (path to the main folder)/data/level.gdat file (you need to save the level to get a new file)
+
+c) Modify the (path to the main folder)/data/level.gdat file with a text editor. The first line should read "x,y,triangle,flipped" (without the quotes) and all the other lines should be two integers seperated by commas, a comma and two other integers either with a value of one or zero, also seperated by commas from each other and the previous integers. This method is suggested only if a big level got corrupted.
+
+<br></br>
+
 Created with Processing 2.2.1 from www.processing.org
