@@ -46,4 +46,4 @@ Idea inspired by carykh's evolutionMATH2 https://www.youtube.com/watch?v=5N7NYc7
 
 <p>Suggestions for a better distribution of mutations (see source) are welcome. (Any kind of suggestions are welcome, but the mutation system seems to be the most broken.)</p>
 
-<br><b><i>Created with Processing 2.2.1 from processing.org</i></b></br>
+<br><b><i>Created with Processing 2.2.1 from www.processing.org</i></b></br>
