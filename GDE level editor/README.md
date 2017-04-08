@@ -30,4 +30,4 @@ c) Modify the (path to the main folder)/data/level.gdat file with a text editor.
 
 <br></br>
 
-Created with Processing 2.2.1 from www.processing.org
+<b><i>Created with Processing 2.2.1 from www.processing.org</i></b>
