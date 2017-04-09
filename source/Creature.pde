@@ -132,24 +132,24 @@ class Creature {
     float p = random (1);
     int b = (p < 0.75f)? 1 : (p < 0.9f)? 2 : 3; // Weighted random: do (3/4 => 1 mutation; 3/20 => 2 mutations; 2/20 => 3 mutations)
     for (; b > 0; b--) {
-      p = random (10); // Weighted random:
-      if (p < 1f) { // 1/9 => add a new Node
+      p = random (9); // Weighted random:
+      if (p < 0.45f) { // 1/20 add a new Node
         addNode ();
-      } else if (p < 2f) { // 1/9 add a new Node in a Connector
+      } else if (p < 0.9f) { // 1/20 add a new Node in a Connector
         addNodeInConn ();
-      } else if (p < 3f) { // 1/9 remove a Node
+      } else if (p < 2f) { // 11/90 remove a Node
         removeNode ();
-      } else if (p < 4f) { // 1/9 change the layer of a Node
+      } else if (p < 3f) { // 1/9 change the layer of a Node
         changeNodeLayer ();
-      } else if (p < 5f) { // 1/9 move a ScreenNode
+      } else if (p < 4f) { // 1/9 move a ScreenNode
         moveScreenNode ();
-      } else if (p < 6f) { // 1/9 change the type of a screenNode
+      } else if (p < 5f) { // 1/9 change the type of a screenNode
         changeScreenNode ();
-      } else if (p < 7f) { // 1/9 change the type of a Connector
+      } else if (p < 6f) { // 1/9 change the type of a Connector
         changeConnectorType ();
-      } else if (p < 8f) { // 1/9 change the output side of a Connector
+      } else if (p < 7f) { // 1/9 change the output side of a Connector
         changeConnectorSide ();
-      } else if (p < 9f) { // 1/9 add a new Connector
+      } else if (p < 8f) { // 1/9 add a new Connector
         addConnector ();
       } else { // 1/9 remove a connector
         removeConnector ();
