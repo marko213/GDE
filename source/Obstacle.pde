@@ -73,7 +73,7 @@ class Obstacle {
   }
   
   boolean inDrawingRegion () {
-    return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height / 2 + obstacleSize / 2); 
+    return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
   }
   
   boolean inCollisionRegion () {
