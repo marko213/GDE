@@ -36,15 +36,15 @@ class Node {
     in1 = in2 = lastVal = false;
   }
   
-  public void draw (PGraphics img) {
-    img.stroke (0);
-    img.strokeWeight (3);
+  public void draw () {
+    stroke (0);
+    strokeWeight (3);
     if (lastVal) {
-      img.fill (100, 200, 100);
+      fill (100, 200, 100);
     } else {
-      img.fill (200, 60, 60);
+      fill (200, 60, 60);
     }
     
-    img.rect (layer * sidebarWidth / 11 + 10, yOffset, nodeSize, nodeSize);
+    rect (layer * sidebarWidth / 11 + 10 + sizeX + 1, yOffset + 200, nodeSize, nodeSize);
   }
 }
