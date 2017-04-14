@@ -27,7 +27,7 @@ Idea inspired by carykh's evolutionMATH2 https://www.youtube.com/watch?v=5N7NYc7
 
 <p>Each node has two inputs: top and bottom. The nodes act as boolean AND gates: if both of their inputs are on, the output will be on (if the output is on, the square will be green and if the output is off, the square will be red). The inputs of nodes act as boolean OR gates: if any of the connectors connected to that input are on, that input will be on.</p>
 <p>An exception is the output node (the rightmost in the network graph), which needs at least one of its inputs to be on, acting as a boolean OR gate.</p>
-<p>Another exception is the screen node. These have two types: box detectors (blue) and triangle detectors (yellow). Screen nodes are the "eyes" of the network: they can tell the network what is currently happening in the game. When a screen node is over an obstacle of the matching type, its output will turn on. Screen nodes can't have inputs.</p>
+<p>Another exception is the screen node. These have three types: box detectors (blue), triangle detectors (yellow) and either detectors (green). Screen nodes are the "eyes" of the network: they can tell the network what is currently happening in the game. When a screen node is over an obstacle of the matching type, its output will turn on. Screen nodes can't have inputs.</p>
 
 <b><i>Connectors</i></b>
 
