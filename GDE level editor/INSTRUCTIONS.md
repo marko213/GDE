@@ -36,3 +36,5 @@ Pressing the 'C' key will clear the level from any obstacles.
 Pressing the 'T' key will toggle the current obstacle between triangles (spikes) and boxes.
 
 Pressing the 'F' key will flip the current obstacle (only effective for triangles).
+
+Pressing the 'N' and 'M' keys will move all obstacles in the current level to the left or right respectively.
