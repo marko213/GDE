@@ -43,6 +43,8 @@ int endX;                  // X position that needs to be reached to win
 int camX = 0;              // Position of the camera (X axis)
 int camY = 0;              // Position of the camera (Y axis)
 
+int genId = 1;             // Id of the generation (1 - ...)
+
 int floorLevel;            // Y coordinate for the floor to be drawn from
 
 boolean lazyEval = true;   // Should the simulation skip already-evaluated creatures? 
@@ -111,7 +113,7 @@ public void keyPressed () {
 
 public void setup (){
   frameRate (60);
-  randomSeed (42);
+  randomSeed (213);
   
   boxGraphics = createGraphics (obstacleSize, obstacleSize);
   triangleGraphics = createGraphics (obstacleSize, obstacleSize);
@@ -184,6 +186,10 @@ public void initRun () {
 public void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
+  if (generations.size () > 2) {
+    generations.remove (0);
+    genId++;
+  }
 }
 
 public void draw () {
@@ -317,7 +323,7 @@ public void drawSidebar () {
   // The information text
   textSize (24);
   fill (180);
-  text ("Gen " + generations.size () + "   creature " + (creatureId + 1) + "   " + processSpeed + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
+  text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + processSpeed + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
 
 public void iterate () {
@@ -363,8 +369,15 @@ public void doGenASAP () {
       camX = max (playerX - sizeX / 2, 0);
       camY = max (playerY - (height - floorLevel), 0);
     }
-    if (won)
-      break;
+    
+    if (won && !hasWon) {
+      hasWon = true;
+      restartTime = 0;
+      initRun ();
+      paused = true;
+      gASAP = false;
+      return;
+    }
     
     generations.get (generations.size () - 1).creatures[creatureId].fitness = playerX;
     do {
@@ -374,7 +387,7 @@ public void doGenASAP () {
     if (creatureId <= Generation.creaturesPerGen - 1) {
       initRun();
     }
-  }  
+  }
   endGeneration ();
   creatureId = 0;
   initRun();
@@ -384,6 +397,7 @@ public void mouseClicked () {
   if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 70, width - 30, 30)) { // Mouse on restart / new gen button
     generations.clear ();
     generations.add (new Generation ());
+    genId = 1;
     creatureId = 0;
     hasWon = false;
     records.clear ();
@@ -445,40 +459,57 @@ public void checkColl () {
   ArrayList<Obstacle> triangles = new ArrayList<Obstacle> ();
   ArrayList<Obstacle> boxes = new ArrayList<Obstacle> ();
   
-  for (Obstacle o : obstacles) { // First check to raise the player
-    if (!o.triangle) { // Must contain all boxes, because the player can be raised into another box (previously out of range)
+  float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
+  
+  for (Obstacle o : obstacles) {
+    if (!o.triangle) {
       boxes.add (o);
     } else {
       triangles.add (o);
       continue;
     }
+  }
+  if (playerVelY <= 0f) { // Player can only be raised if it's moving down
+  
+    int tempY = playerY; // Store Y value to be raised to
     
-    if (!o.inCollisionRegion ()) {
-      continue;
-    }
-    
-    // if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
-    if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
-        /*kill ();
-        return;*/
-    } else { // Player (probably) approached from the Y axis
-      int sgn = (gravity < 0)? -1 : 1;
-      if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
-        playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
-      /*} else {
-        kill ();
-        return;*/
+    for (Obstacle o : boxes) { // First check to raise the player     
+      
+      if (!o.inCollisionRegion ()) {
+        continue;
+      }
+      
+      /*
+      // if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
+      if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+          //kill ();
+          //return;
+      } else { // Player (probably) approached from the Y axis
+        int sgn = (gravity < 0)? -1 : 1;
+        if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
+          playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
+        //} else {
+        //  kill ();
+        //  return;
+        }
+      }
+      */
+      
+      if (prevY >= o.y + obstacleSize / 2 + playerSize / 2 && o.y + obstacleSize / 2 + playerSize / 2 > tempY) { // Only raise the player if the player was above the box and the current raise is below that of the obstacle
+        if (betweenIn(playerVelX * (abs (max(prevY, o.y) - min(prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
+          tempY = o.y + obstacleSize / 2 + playerSize / 2; // Raise the player
+        }
       }
     }
+    playerY = tempY; // Apply the raising
   }
   
   for (Obstacle o : boxes) { // Second check to kill the player (if needed)
-    
     if (!o.inCollisionRegion ()) {
       continue;
     }
     
-    if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+    /*if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
         kill ();
         return;
     } else { // Player (probably) approached from the Y axis
@@ -487,10 +518,15 @@ public void checkColl () {
         kill ();
         return;
       }
+    }*/
+    
+    if (betweenIn(playerY - (playerY - prevY) * (abs (max(o.x, prevX) - min(o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
+      kill ();
+      return;
     }
   }
   
-  for (Obstacle o : triangles) { // Finally check the triangles (most load)
+  for (Obstacle o : triangles) { // Finally check the triangles (most load (??))
     int[] points = {o.x - obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y, o.x, o.flipped? o.y : o.y + obstacleSize, o.x + obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y};
     
     if (pointInBoxEx (o.x - obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) || 
@@ -557,7 +593,15 @@ public boolean betweenEx (int value, int min, int max) {
   return value < max && value > min;
 }
 
+public boolean betweenEx (float value, int min, int max) {
+  return value < max && value > min;
+}
+
 public boolean betweenIn (int value, int min, int max) {
+  return value <= max && value >= min;
+}
+
+public boolean betweenIn (float value, int min, int max) {
   return value <= max && value >= min;
 }
 
@@ -788,8 +832,18 @@ class Creature {
   
   public void nrmlRandomize () {
     fitness = 0; // Reset the fitness, marks the creature to be re-evaluated
+    
     float p = random (1);
-    int b = (p < 0.75f)? 1 : (p < 0.9f)? 2 : 3; // Weighted random: do (3/4 => 1 mutation; 3/20 => 2 mutations; 2/20 => 3 mutations)
+    
+    int b = 6;
+    
+    for (int i = 1; i < 6; i++) {
+      if (p > pow (2, -i)) {
+        b = i;
+        break;
+      }
+    }
+    
     for (; b > 0; b--) {
       p = random (9); // Weighted random:
       if (p < 0.45f) { // 1/20 add a new Node
@@ -818,11 +872,23 @@ class Creature {
   }
   
   public void addNode () { // Add a random node
+    if (nodes.size () > 25 && random (1) < 0.6f)
+        return;
     float p = random (1);
     Node no;
     
     if (p < 0.6f) { // ScreenNode (~3/5 chance)
-      no = new ScreenNode (((int) random (sizeX / 50 - 1)) * 50 + 25, ((int) random (height / 50 - 1)) * 50 + 25, random (3) < 1f);
+      no = new ScreenNode (((int) random (sizeX / 50 - 1)) * 50 + 25, ((int) random (height / 50 - 1)) * 50 + 25, (random (1) < 0.2f)? 2 : (int) random (2));
+      for (Node n : nodes) {
+        if (n instanceof ScreenNode) {
+          if (((ScreenNode) n).x == ((ScreenNode) no).x && ((ScreenNode) n).y == ((ScreenNode) no).y) {
+            if ((((ScreenNode) no).type + ((ScreenNode) n).type == 1) && random (1) < 0.5f) {
+              ((ScreenNode) n).type = 2;
+            }
+            return;
+          }
+        }
+      }
     } else { // Regular Node (~2/5 chance)
       no = new Node (0);
     }
@@ -853,10 +919,17 @@ class Creature {
     
     do {
       o = sel.get ((int) random (sel.size ()));
-    } while (!(no instanceof ScreenNode) && o.layer == 0); // Generate a new node, if the new Node is a regular Node and the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
+    } while (o.layer == 0); // Generate a new node if the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
     
     if (!(no instanceof ScreenNode)) {
       no.layer = (int) random (o.layer); // Set the layer for the new node
+      int i = 0;
+      for (Node n : nodes) {
+        if (n.layer == no.layer)
+          i++;
+      }
+      if (i >= 6)
+        return;
     }
     
     Connector c = new Connector (o, random (1) > 0.5f);
@@ -869,6 +942,8 @@ class Creature {
   }
   
   public void addNodeInConn () { // Add a random node inside a connection
+    if (nodes.size () > 25 && random (1) < 0.6f)
+      return;
     if (connectors.size () == 0)
       return;
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
@@ -994,8 +1069,38 @@ class Creature {
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
     // Move the ScreenNode
+    int px = sn.x, py = sn.y;
     sn.x = ((int) random (sizeX / 50 - 1)) * 50 + 25;
     sn.y = ((int) random (height / 50 - 1)) * 50 + 25;
+    
+    for (Node n : scn) {
+      if (n instanceof ScreenNode && ((ScreenNode) n) != sn) {
+        if (((ScreenNode)n).x == sn.x && ((ScreenNode) n).y == sn.y) {
+          if ((((ScreenNode) n).type + sn.type == 1) && random (1) < 0.5f) {
+            ((ScreenNode) n).type = 2;
+            ArrayList<Node> r = new ArrayList<Node> (); // Which nodes are already connected to by this node
+            for (Connector c : n.o) {
+              r.add (c.output);
+            }
+            
+            for (Connector c : sn.o) {
+              if (r.indexOf (c.output) == -1) {
+                n.o.add (c);
+                c.input = n;
+              } else {
+                connectors.remove (connectors.indexOf (c));
+              }
+            }
+            sn.o.clear ();
+            nodes.remove (nodes.indexOf (sn));
+          } else {
+            sn.x = px;
+            sn.y = py;
+          }
+          break;
+        }
+      }
+    }
   }
   
   public void changeScreenNode () {
@@ -1011,7 +1116,10 @@ class Creature {
       
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
-    sn.triangle = !sn.triangle;
+    if (sn.type == 2)
+      sn.type = (int) random(2);
+    else
+      sn.type = (random(3) < 2f)? 1 - sn.type : 2;
   }
   
   public void changeConnectorType () {
@@ -1216,8 +1324,9 @@ class Creature {
       
       println ("Nodes:");
       for (Node n : nodes) {
+        print (nodes.indexOf(n) + " ");
         if (n instanceof ScreenNode) {
-          println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + (((ScreenNode) n).triangle ? "triangle" : "box") + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
+          println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + ((ScreenNode) n).type + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
         } else {
           println ((n.layer == 10 ? "Output" : "Regular") + " node on layer " + n.layer + (n.layer == 10 ? "" : ", outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -"))));
         }
@@ -1231,19 +1340,19 @@ class Creature {
       
       println ("Connectors:");
       for (Connector c : connectors) {
-        println ("Connector connecting nodes from layer " + c.input.layer + " to layer " + c.output.layer);
+        println ("Connector connecting nodes from layer " + c.input.layer + " (id "+ nodes.indexOf (c.input) +") to layer " + c.output.layer + " (id " + nodes.indexOf (c.output) + ")");
         if (c.output.layer <= c.input.layer) {
           println ("Invalid connector layering detected: printing node info");
           println ("Input:");
           if (c.input instanceof ScreenNode) {
-            println ("Screen node (" + ((ScreenNode) c.input).x + ", " + ((ScreenNode) c.input).y + "): type: " + (((ScreenNode) c.input).triangle ? "triangle" : "box") + "; outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer));
+            println ("Screen node (" + ((ScreenNode) c.input).x + ", " + ((ScreenNode) c.input).y + "): type: " + ((ScreenNode) c.input).type + "; outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer));
           } else {
             println ((c.input.layer == 10 ? "Output" : "Regular") + " node on layer " + c.input.layer + (c.input.layer == 10 ? "" : ", outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer)));
           }
           
           println ("Output:");
           if (c.output instanceof ScreenNode) {
-            println ("Screen node (" + ((ScreenNode) c.output).x + ", " + ((ScreenNode) c.output).y + "): type: " + (((ScreenNode) c.output).triangle ? "triangle" : "box") + "; outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer));
+            println ("Screen node (" + ((ScreenNode) c.output).x + ", " + ((ScreenNode) c.output).y + "): type: " + ((ScreenNode) c.output).type + "; outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer));
           } else {
             println ((c.output.layer == 10 ? "Output" : "Regular") + " node on layer " + c.output.layer + (c.output.layer == 10 ? "" : ", outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer)));
           }
@@ -1254,27 +1363,22 @@ class Creature {
   }
   
   public void draw () {
-    
-    PGraphics nodeGraphics = createGraphics (sidebarWidth, 350);
-    
-    nodeGraphics.beginDraw ();
+
     for (Node n : nodes) {
       if (n.layer == -1 && networkDrawMode == 1) { // Draw a ScreenNode
-        n.draw (null);
+        n.draw ();
         for (Connector c : n.o) {
           c.draw ();
         }
       } else if (n.layer < 10 && n.layer > -1 && networkDrawMode != 2) { // Draw a normal Node
-        n.draw (nodeGraphics);
+        n.draw ();
         for (Connector c : n.o) {
           c.draw ();
         }
       } else if (n.layer == 10){ // Draw the output node
-        n.draw (nodeGraphics);
+        n.draw ();
       }
     }
-    nodeGraphics.endDraw ();
-    image (nodeGraphics, sizeX + 1, 200);
   }
 }
 class Generation {
@@ -1405,16 +1509,16 @@ class Node {
     in1 = in2 = lastVal = false;
   }
   
-  public void draw (PGraphics img) {
-    img.stroke (0);
-    img.strokeWeight (3);
+  public void draw () {
+    stroke (0);
+    strokeWeight (3);
     if (lastVal) {
-      img.fill (100, 200, 100);
+      fill (100, 200, 100);
     } else {
-      img.fill (200, 60, 60);
+      fill (200, 60, 60);
     }
     
-    img.rect (layer * sidebarWidth / 11 + 10, yOffset, nodeSize, nodeSize);
+    rect (layer * sidebarWidth / 11 + 10 + sizeX + 1, yOffset + 200, nodeSize, nodeSize);
   }
 }
 class Obstacle {
@@ -1492,7 +1596,7 @@ class Obstacle {
   }
   
   public boolean inDrawingRegion () {
-    return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height / 2 + obstacleSize / 2); 
+    return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
   }
   
   public boolean inCollisionRegion () {
@@ -1504,24 +1608,24 @@ class Record {
 }
 class ScreenNode extends Node {
   
-  public boolean triangle;
+  public int type; // 0 - box; 1 - triangle; 2 - both
   public int x, y;
   
-  public ScreenNode (int x, int y, boolean triangle) {
+  public ScreenNode (int x, int y, int type) {
     super (-1);
     this.x = x;
     this.y = y;
-    this.triangle = triangle;
+    this.type = type;
   }
   
   public ScreenNode clone () {
-    return new ScreenNode (x, y, triangle);
+    return new ScreenNode (x, y, type);
   }
   
   @Override
   public void iterate () {
     
-      if (!triangle && y - (sizeY - floorLevel) + camY <= 0) {
+      if (type != 1 && y - (sizeY - floorLevel) + camY <= 0) {
         lastVal = true; 
         iterateOutputs (true);
         return;
@@ -1529,7 +1633,7 @@ class ScreenNode extends Node {
     
     for (Obstacle ob : obstacles) {
       
-      if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ob.triangle == triangle) {
+      if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
         lastVal = true;
         iterateOutputs (true);
         return;
@@ -1541,24 +1645,32 @@ class ScreenNode extends Node {
   }
   
   @Override
-  public void draw (PGraphics img) {
+  public void draw () {
     stroke (0);
     strokeWeight (3);
-    switch ((triangle? 2 : 0) + (lastVal? 1 : 0)) {
+    switch (type + (lastVal? 3 : 0)) {
       case 0: // Box detector & last value false
         fill (0, 0, 100);
         break;
         
-      case 1: // Box detector & last value true
+      case 3: // Box detector & last value true
         fill (50, 50, 200);
         break;
         
-      case 2: // Triangle detector & last value false
+      case 1: // Triangle detector & last value false
         fill (100, 100, 0);
         break;
         
-      case 3: // Triangle detector & last value true
+      case 4: // Triangle detector & last value true
         fill (200, 200, 50);
+        break;
+        
+      case 2: // Both detector & last value false
+        fill (0, 100,0);
+        break;
+      
+      case 5: // Both detector & last value true
+        fill (0, 200, 0);
         break;
     }
     

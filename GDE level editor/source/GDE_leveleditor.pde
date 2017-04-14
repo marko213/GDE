@@ -115,7 +115,7 @@ class Obstacle {
   }
   
   boolean inDrawingRegion () {
-    return betweenIn(x, camX - obstacleSize / 2, camX + width + obstacleSize / 2) && betweenIn(y, camY - height / 2 - obstacleSize / 2, camY + height / 2 + obstacleSize / 2); 
+    return betweenIn(x, camX - obstacleSize / 2, camX + width + obstacleSize / 2) && betweenIn(y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
   }
   
   boolean inCollisionRegion() {
@@ -159,6 +159,16 @@ void keyPressed() {
       tempObstacle.triangle = !tempObstacle.triangle;
       break; 
     
+    case 'm':
+      for (Obstacle o : obstacles)
+        o.x += 50;
+      break;
+      
+    case 'n':
+      for (Obstacle o : obstacles)
+        o.x -= 50;
+      break;
+      
     default:
       if (key == CODED) {
         switch (keyCode) {
@@ -298,7 +308,7 @@ void draw() {
   
   noStroke();
   fill(70, 70, 60);
-  rect(camX, floorLevel, width, height);
+  rect(camX, floorLevel, width, height - floorLevel);
   
   if(paused) {
     int x = mouseX + camX;
@@ -308,7 +318,7 @@ void draw() {
       tempObstacle.y = max(y + floorLevel - obstacleSize / 2, 0);
     } else {
       tempObstacle.x = x - (x % obstacleSize) + obstacleSize / 2;
-      tempObstacle.y = max(y + floorLevel - (y % obstacleSize) - obstacleSize, 0);
+      tempObstacle.y = max(y + floorLevel - (y % obstacleSize) - (y < 0? obstacleSize : 0), 0);
     }
     tempObstacle.draw();
   }
@@ -389,78 +399,141 @@ void iterate() {
   }
 }
 
-void checkColl() {
+void checkColl () {
   
   if (playerY < 0) {
     playerY = 0;
   }
   
-  ArrayList<Obstacle> triangles = new ArrayList<Obstacle>();
-  ArrayList<Obstacle> boxes = new ArrayList<Obstacle>();
-  
-  for (Obstacle o : obstacles) { // First check to raise the player
-    if(!o.triangle) { // Must contain all boxes, because the player can be raised into another box (previously out of range)
-      boxes.add(o);
+  //Old code revamped for better load (triangles take a bit more computing power) (might be untrue as trigonometric functions are now used for boxes)
+  /*for (Obstacle o : obstacles) { 
+    if (!o.inDrawingRegion ()) {
+      continue;
+    }
+    if (o.triangle) {
+      int[] points = {o.x - obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y, o.x, o.flipped? o.y : o.y + obstacleSize, o.x + obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y};
+      if (pointInBox (o.x - obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) || 
+         pointInBox (o.x + obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) ||
+         pointInBox (o.x, o.y + obstacleSize, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY)) { // Player definitely clips the triangle (some point of the triangle is in the player)
+         
+        kill ();
+        break;
+       }
+      if (pointInTriangle (playerX - playerSize / 2, playerY, points) ||
+         pointInTriangle (playerX + playerSize / 2, playerY, points) ||
+         pointInTriangle (playerX - playerSize / 2, playerY + playerSize, points) ||
+         pointInTriangle (playerX + playerSize / 2, playerY + playerSize, points)) { // Player clips the triangle
+        
+        kill ();
+        break;
+        
+      }
     } else {
-      triangles.add(o);
-      continue;
-    }
-    
-    if(!o.inCollisionRegion()) {
-      continue;
-    }
-    
-    // if(betweenEx(playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
-    if (abs(playerX - o.x) > abs(playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
-        /*kill();
-        return;*/
-    } else { // Player (probably) approached from the Y axis
-      int sgn = (gravity < 0)? -1 : 1;
-      if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
-        playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
-      /*} else {
-        kill();
-        return;*/
+      if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
+        if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side
+          kill ();
+          break;
+        } else { // Player (probably) approached from the Y axis
+          int sgn = (gravity < 0)? -1 : 1;
+          if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
+            playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
+          } else {
+            kill ();
+            break;
+          }
+        }
       }
     }
+  }*/
+  
+  ArrayList<Obstacle> triangles = new ArrayList<Obstacle> ();
+  ArrayList<Obstacle> boxes = new ArrayList<Obstacle> ();
+  
+  float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
+  
+  for (Obstacle o : obstacles) {
+    if (!o.triangle) {
+      boxes.add (o);
+    } else {
+      triangles.add (o);
+      continue;
+    }
+  }
+  if (playerVelY <= 0f) { // Player can only be raised if it's moving down
+  
+    int tempY = playerY; // Store Y value to be raised to
+    
+    for (Obstacle o : boxes) { // First check to raise the player     
+      
+      if (!o.inCollisionRegion ()) {
+        continue;
+      }
+      
+      /*
+      // if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
+      if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+          //kill ();
+          //return;
+      } else { // Player (probably) approached from the Y axis
+        int sgn = (gravity < 0)? -1 : 1;
+        if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
+          playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
+        //} else {
+        //  kill ();
+        //  return;
+        }
+      }
+      */
+      
+      if (prevY >= o.y + obstacleSize / 2 + playerSize / 2 && o.y + obstacleSize / 2 + playerSize / 2 > tempY) { // Only raise the player if the player was above the box and the current raise is below that of the obstacle
+        if (betweenIn(playerVelX * (abs (max(prevY, o.y) - min(prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
+          tempY = o.y + obstacleSize / 2 + playerSize / 2; // Raise the player
+        }
+      }
+    }
+    playerY = tempY; // Apply the raising
   }
   
   for (Obstacle o : boxes) { // Second check to kill the player (if needed)
-    
-    if(!o.inCollisionRegion()) {
+    if (!o.inCollisionRegion ()) {
       continue;
     }
     
-    if (abs(playerX - o.x) > abs(playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
-        kill();
+    /*if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+        kill ();
         return;
     } else { // Player (probably) approached from the Y axis
       int sgn = (gravity < 0)? -1 : 1;
-      if (!(playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1)) { // Player collided on the incorrect side
-        kill();
+      if (! (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1)) { // Player collided on the incorrect side
+        kill ();
         return;
       }
+    }*/
+    
+    if (betweenIn(playerY - (playerY - prevY) * (abs (max(o.x, prevX) - min(o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
+      kill ();
+      return;
     }
   }
   
-  for (Obstacle o : triangles) { // Finally check the triangles
+  for (Obstacle o : triangles) { // Finally check the triangles (most load (??))
     int[] points = {o.x - obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y, o.x, o.flipped? o.y : o.y + obstacleSize, o.x + obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y};
     
-    if(pointInBoxEx(o.x - obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) || 
-       pointInBoxEx(o.x + obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) ||
-       pointInBoxEx(o.x, o.y + obstacleSize, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY)) { // Player definately clips the triangle (some point of the triangle is in the player)
+    if (pointInBoxEx (o.x - obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) || 
+       pointInBoxEx (o.x + obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) ||
+       pointInBoxEx (o.x, o.y + obstacleSize, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY)) { // Player definately clips the triangle (some point of the triangle is in the player)
        
-      kill();
+      kill ();
       return;
       
     }
        
-    if(pointInTriangle(playerX - playerSize / 2, playerY, points) ||
-       pointInTriangle(playerX + playerSize / 2, playerY, points) ||
-       pointInTriangle(playerX - playerSize / 2, playerY + playerSize, points) ||
-       pointInTriangle(playerX + playerSize / 2, playerY + playerSize, points)) { // Player clips the triangle
+    if (pointInTriangle (playerX - playerSize / 2, playerY, points) ||
+       pointInTriangle (playerX + playerSize / 2, playerY, points) ||
+       pointInTriangle (playerX - playerSize / 2, playerY + playerSize, points) ||
+       pointInTriangle (playerX + playerSize / 2, playerY + playerSize, points)) { // Player clips the triangle
       
-      kill();
+      kill ();
       return;
     
     }
@@ -510,7 +583,15 @@ boolean betweenEx (int value, int min, int max) {
   return value < max && value > min;
 }
 
+boolean betweenEx (float value, int min, int max) {
+  return value < max && value > min;
+}
+
 boolean betweenIn (int value, int min, int max) {
+  return value <= max && value >= min;
+}
+
+boolean betweenIn (float value, int min, int max) {
   return value <= max && value >= min;
 }
 

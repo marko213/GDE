@@ -27,6 +27,8 @@ int endX;                  // X position that needs to be reached to win
 int camX = 0;              // Position of the camera (X axis)
 int camY = 0;              // Position of the camera (Y axis)
 
+int genId = 1;             // Id of the generation (1 - ...)
+
 int floorLevel;            // Y coordinate for the floor to be drawn from
 
 boolean lazyEval = true;   // Should the simulation skip already-evaluated creatures? 
@@ -95,7 +97,7 @@ void keyPressed () {
 
 void setup (){
   frameRate (60);
-  randomSeed (42);
+  randomSeed (213);
   
   boxGraphics = createGraphics (obstacleSize, obstacleSize);
   triangleGraphics = createGraphics (obstacleSize, obstacleSize);
@@ -168,6 +170,10 @@ void initRun () {
 void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
+  if (generations.size () > 2) {
+    generations.remove (0);
+    genId++;
+  }
 }
 
 void draw () {
@@ -301,7 +307,7 @@ void drawSidebar () {
   // The information text
   textSize (24);
   fill (180);
-  text ("Gen " + generations.size () + "   creature " + (creatureId + 1) + "   " + processSpeed + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
+  text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + processSpeed + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
 
 void iterate () {
@@ -347,8 +353,15 @@ void doGenASAP () {
       camX = max (playerX - sizeX / 2, 0);
       camY = max (playerY - (height - floorLevel), 0);
     }
-    if (won)
-      break;
+    
+    if (won && !hasWon) {
+      hasWon = true;
+      restartTime = 0;
+      initRun ();
+      paused = true;
+      gASAP = false;
+      return;
+    }
     
     generations.get (generations.size () - 1).creatures[creatureId].fitness = playerX;
     do {
@@ -358,7 +371,7 @@ void doGenASAP () {
     if (creatureId <= Generation.creaturesPerGen - 1) {
       initRun();
     }
-  }  
+  }
   endGeneration ();
   creatureId = 0;
   initRun();
@@ -368,6 +381,7 @@ void mouseClicked () {
   if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 70, width - 30, 30)) { // Mouse on restart / new gen button
     generations.clear ();
     generations.add (new Generation ());
+    genId = 1;
     creatureId = 0;
     hasWon = false;
     records.clear ();
@@ -429,40 +443,57 @@ void checkColl () {
   ArrayList<Obstacle> triangles = new ArrayList<Obstacle> ();
   ArrayList<Obstacle> boxes = new ArrayList<Obstacle> ();
   
-  for (Obstacle o : obstacles) { // First check to raise the player
-    if (!o.triangle) { // Must contain all boxes, because the player can be raised into another box (previously out of range)
+  float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
+  
+  for (Obstacle o : obstacles) {
+    if (!o.triangle) {
       boxes.add (o);
     } else {
       triangles.add (o);
       continue;
     }
+  }
+  if (playerVelY <= 0f) { // Player can only be raised if it's moving down
+  
+    int tempY = playerY; // Store Y value to be raised to
     
-    if (!o.inCollisionRegion ()) {
-      continue;
-    }
-    
-    // if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
-    if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
-        /*kill ();
-        return;*/
-    } else { // Player (probably) approached from the Y axis
-      int sgn = (gravity < 0)? -1 : 1;
-      if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
-        playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
-      /*} else {
-        kill ();
-        return;*/
+    for (Obstacle o : boxes) { // First check to raise the player     
+      
+      if (!o.inCollisionRegion ()) {
+        continue;
+      }
+      
+      /*
+      // if (betweenEx (playerX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2) && betweenEx (playerY, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Player clips the obstacle
+      if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+          //kill ();
+          //return;
+      } else { // Player (probably) approached from the Y axis
+        int sgn = (gravity < 0)? -1 : 1;
+        if (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1) { // Player collided on the correct side
+          playerY = o.y + (obstacleSize / 2 + playerSize / 2) * sgn;
+        //} else {
+        //  kill ();
+        //  return;
+        }
+      }
+      */
+      
+      if (prevY >= o.y + obstacleSize / 2 + playerSize / 2 && o.y + obstacleSize / 2 + playerSize / 2 > tempY) { // Only raise the player if the player was above the box and the current raise is below that of the obstacle
+        if (betweenIn(playerVelX * (abs (max(prevY, o.y) - min(prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
+          tempY = o.y + obstacleSize / 2 + playerSize / 2; // Raise the player
+        }
       }
     }
+    playerY = tempY; // Apply the raising
   }
   
   for (Obstacle o : boxes) { // Second check to kill the player (if needed)
-    
     if (!o.inCollisionRegion ()) {
       continue;
     }
     
-    if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
+    /*if (abs (playerX - o.x) > abs (playerY - o.y)) { // Player (probably) approached from the side (defaults to y axis if equal!!!)
         kill ();
         return;
     } else { // Player (probably) approached from the Y axis
@@ -471,10 +502,15 @@ void checkColl () {
         kill ();
         return;
       }
+    }*/
+    
+    if (betweenIn(playerY - (playerY - prevY) * (abs (max(o.x, prevX) - min(o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
+      kill ();
+      return;
     }
   }
   
-  for (Obstacle o : triangles) { // Finally check the triangles (most load)
+  for (Obstacle o : triangles) { // Finally check the triangles (most load (??))
     int[] points = {o.x - obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y, o.x, o.flipped? o.y : o.y + obstacleSize, o.x + obstacleSize / 2, o.flipped? o.y + obstacleSize : o.y};
     
     if (pointInBoxEx (o.x - obstacleSize / 2, o.y, playerX - playerSize / 2, playerY + playerSize, playerX + playerSize / 2, playerY) || 
@@ -541,7 +577,15 @@ boolean betweenEx (int value, int min, int max) {
   return value < max && value > min;
 }
 
+boolean betweenEx (float value, int min, int max) {
+  return value < max && value > min;
+}
+
 boolean betweenIn (int value, int min, int max) {
+  return value <= max && value >= min;
+}
+
+boolean betweenIn (float value, int min, int max) {
   return value <= max && value >= min;
 }
 

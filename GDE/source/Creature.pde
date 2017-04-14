@@ -129,8 +129,18 @@ class Creature {
   
   public void nrmlRandomize () {
     fitness = 0; // Reset the fitness, marks the creature to be re-evaluated
+    
     float p = random (1);
-    int b = (p < 0.75f)? 1 : (p < 0.9f)? 2 : 3; // Weighted random: do (3/4 => 1 mutation; 3/20 => 2 mutations; 2/20 => 3 mutations)
+    
+    int b = 6;
+    
+    for (int i = 1; i < 6; i++) {
+      if (p > pow (2, -i)) {
+        b = i;
+        break;
+      }
+    }
+    
     for (; b > 0; b--) {
       p = random (9); // Weighted random:
       if (p < 0.45f) { // 1/20 add a new Node
@@ -159,11 +169,23 @@ class Creature {
   }
   
   void addNode () { // Add a random node
+    if (nodes.size () > 25 && random (1) < 0.6f)
+        return;
     float p = random (1);
     Node no;
     
     if (p < 0.6f) { // ScreenNode (~3/5 chance)
-      no = new ScreenNode (((int) random (sizeX / 50 - 1)) * 50 + 25, ((int) random (height / 50 - 1)) * 50 + 25, random (3) < 1f);
+      no = new ScreenNode (((int) random (sizeX / 50 - 1)) * 50 + 25, ((int) random (height / 50 - 1)) * 50 + 25, (random (1) < 0.2f)? 2 : (int) random (2));
+      for (Node n : nodes) {
+        if (n instanceof ScreenNode) {
+          if (((ScreenNode) n).x == ((ScreenNode) no).x && ((ScreenNode) n).y == ((ScreenNode) no).y) {
+            if ((((ScreenNode) no).type + ((ScreenNode) n).type == 1) && random (1) < 0.5f) {
+              ((ScreenNode) n).type = 2;
+            }
+            return;
+          }
+        }
+      }
     } else { // Regular Node (~2/5 chance)
       no = new Node (0);
     }
@@ -194,10 +216,17 @@ class Creature {
     
     do {
       o = sel.get ((int) random (sel.size ()));
-    } while (!(no instanceof ScreenNode) && o.layer == 0); // Generate a new node, if the new Node is a regular Node and the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
+    } while (o.layer == 0); // Generate a new node if the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
     
     if (!(no instanceof ScreenNode)) {
       no.layer = (int) random (o.layer); // Set the layer for the new node
+      int i = 0;
+      for (Node n : nodes) {
+        if (n.layer == no.layer)
+          i++;
+      }
+      if (i >= 6)
+        return;
     }
     
     Connector c = new Connector (o, random (1) > 0.5f);
@@ -210,6 +239,8 @@ class Creature {
   }
   
   void addNodeInConn () { // Add a random node inside a connection
+    if (nodes.size () > 25 && random (1) < 0.6f)
+      return;
     if (connectors.size () == 0)
       return;
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
@@ -335,8 +366,38 @@ class Creature {
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
     // Move the ScreenNode
+    int px = sn.x, py = sn.y;
     sn.x = ((int) random (sizeX / 50 - 1)) * 50 + 25;
     sn.y = ((int) random (height / 50 - 1)) * 50 + 25;
+    
+    for (Node n : scn) {
+      if (n instanceof ScreenNode && ((ScreenNode) n) != sn) {
+        if (((ScreenNode)n).x == sn.x && ((ScreenNode) n).y == sn.y) {
+          if ((((ScreenNode) n).type + sn.type == 1) && random (1) < 0.5f) {
+            ((ScreenNode) n).type = 2;
+            ArrayList<Node> r = new ArrayList<Node> (); // Which nodes are already connected to by this node
+            for (Connector c : n.o) {
+              r.add (c.output);
+            }
+            
+            for (Connector c : sn.o) {
+              if (r.indexOf (c.output) == -1) {
+                n.o.add (c);
+                c.input = n;
+              } else {
+                connectors.remove (connectors.indexOf (c));
+              }
+            }
+            sn.o.clear ();
+            nodes.remove (nodes.indexOf (sn));
+          } else {
+            sn.x = px;
+            sn.y = py;
+          }
+          break;
+        }
+      }
+    }
   }
   
   void changeScreenNode () {
@@ -352,7 +413,10 @@ class Creature {
       
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
-    sn.triangle = !sn.triangle;
+    if (sn.type == 2)
+      sn.type = (int) random(2);
+    else
+      sn.type = (random(3) < 2f)? 1 - sn.type : 2;
   }
   
   void changeConnectorType () {
@@ -557,8 +621,9 @@ class Creature {
       
       println ("Nodes:");
       for (Node n : nodes) {
+        print (nodes.indexOf(n) + " ");
         if (n instanceof ScreenNode) {
-          println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + (((ScreenNode) n).triangle ? "triangle" : "box") + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
+          println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + ((ScreenNode) n).type + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
         } else {
           println ((n.layer == 10 ? "Output" : "Regular") + " node on layer " + n.layer + (n.layer == 10 ? "" : ", outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -"))));
         }
@@ -572,19 +637,19 @@ class Creature {
       
       println ("Connectors:");
       for (Connector c : connectors) {
-        println ("Connector connecting nodes from layer " + c.input.layer + " to layer " + c.output.layer);
+        println ("Connector connecting nodes from layer " + c.input.layer + " (id "+ nodes.indexOf (c.input) +") to layer " + c.output.layer + " (id " + nodes.indexOf (c.output) + ")");
         if (c.output.layer <= c.input.layer) {
           println ("Invalid connector layering detected: printing node info");
           println ("Input:");
           if (c.input instanceof ScreenNode) {
-            println ("Screen node (" + ((ScreenNode) c.input).x + ", " + ((ScreenNode) c.input).y + "): type: " + (((ScreenNode) c.input).triangle ? "triangle" : "box") + "; outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer));
+            println ("Screen node (" + ((ScreenNode) c.input).x + ", " + ((ScreenNode) c.input).y + "): type: " + ((ScreenNode) c.input).type + "; outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer));
           } else {
             println ((c.input.layer == 10 ? "Output" : "Regular") + " node on layer " + c.input.layer + (c.input.layer == 10 ? "" : ", outputs to layer" + (c.input.o.size () > 1 ? "s:" : " " + c.input.o.get (0).output.layer)));
           }
           
           println ("Output:");
           if (c.output instanceof ScreenNode) {
-            println ("Screen node (" + ((ScreenNode) c.output).x + ", " + ((ScreenNode) c.output).y + "): type: " + (((ScreenNode) c.output).triangle ? "triangle" : "box") + "; outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer));
+            println ("Screen node (" + ((ScreenNode) c.output).x + ", " + ((ScreenNode) c.output).y + "): type: " + ((ScreenNode) c.output).type + "; outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer));
           } else {
             println ((c.output.layer == 10 ? "Output" : "Regular") + " node on layer " + c.output.layer + (c.output.layer == 10 ? "" : ", outputs to layer" + (c.output.o.size () > 1 ? "s:" : " " + c.output.o.get (0).output.layer)));
           }
@@ -595,26 +660,21 @@ class Creature {
   }
   
   public void draw () {
-    
-    PGraphics nodeGraphics = createGraphics (sidebarWidth, 350);
-    
-    nodeGraphics.beginDraw ();
+
     for (Node n : nodes) {
       if (n.layer == -1 && networkDrawMode == 1) { // Draw a ScreenNode
-        n.draw (null);
+        n.draw ();
         for (Connector c : n.o) {
           c.draw ();
         }
       } else if (n.layer < 10 && n.layer > -1 && networkDrawMode != 2) { // Draw a normal Node
-        n.draw (nodeGraphics);
+        n.draw ();
         for (Connector c : n.o) {
           c.draw ();
         }
       } else if (n.layer == 10){ // Draw the output node
-        n.draw (nodeGraphics);
+        n.draw ();
       }
     }
-    nodeGraphics.endDraw ();
-    image (nodeGraphics, sizeX + 1, 200);
   }
 }
