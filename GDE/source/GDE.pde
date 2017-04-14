@@ -399,7 +399,7 @@ void checkColl () {
     playerY = 0;
   }
   
-  //Old code revamped for better load (triangles take a bit more computing power) (might be untrue as trigonometric functions are now used for boxes)
+  //Old code revamped for better load (triangles take a bit more computing power)
   /*for (Obstacle o : obstacles) { 
     if (!o.inDrawingRegion ()) {
       continue;
