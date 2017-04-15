@@ -42,6 +42,7 @@ int endX;                  // X position that needs to be reached to win
 
 int camX = 0;              // Position of the camera (X axis)
 int camY = 0;              // Position of the camera (Y axis)
+int drawIndex = 0;
 
 int genId = 1;             // Id of the generation (1 - ...)
 
@@ -172,10 +173,13 @@ public void setup (){
 }
 
 public void initRun () {
+  drawIndex = 0;
   playerX = 40;
   playerY = 0;
   playerVelY = 0f;
   playerVelX = 5;
+  camX = 0;
+  camY = 0;
   gravity = abs (gravity);
   restartTime = 0;
   won = false;
@@ -186,9 +190,9 @@ public void initRun () {
 public void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
+  genId ++;
   if (generations.size () > 2) {
     generations.remove (0);
-    genId++;
   }
 }
 
@@ -218,9 +222,18 @@ public void draw () {
     drawPlayer ();
   }
   
-  for (Obstacle o : obstacles) {
-    if (o.inDrawingRegion ()) {
-      o.draw ();
+  boolean a = false;
+  
+  for(int i = (paused ? 0 : drawIndex); i < obstacles.length; i ++) { 
+    
+    Obstacle o = obstacles[i];
+    
+    if(betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      a = true;
+      if (betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        o.draw();
+    } else if (a) {
+      break;
     }
   }
   
@@ -461,14 +474,31 @@ public void checkColl () {
   
   float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
   
-  for (Obstacle o : obstacles) {
+  boolean a = false;
+  
+  for (int i = drawIndex; i < obstacles.length; i ++) {
+    Obstacle o = obstacles[i];
+    
+    if (betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      if (!a) {
+        a = true;
+        drawIndex = i;
+      }
+      if (!betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        continue;
+    } else {
+      if (a)
+        break;
+      continue;
+    }
+    
     if (!o.triangle) {
       boxes.add (o);
     } else {
       triangles.add (o);
-      continue;
     }
   }
+  
   if (playerVelY <= 0f) { // Player can only be raised if it's moving down
   
     int tempY = playerY; // Store Y value to be raised to
@@ -1595,9 +1625,9 @@ class Obstacle {
     return ret;
   }
   
-  public boolean inDrawingRegion () {
+  /*boolean inDrawingRegion () {
     return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
-  }
+  }*/
   
   public boolean inCollisionRegion () {
     return betweenEx (x, playerX - obstacleSize / 2 - playerSize / 2, playerX + obstacleSize / 2 + playerSize / 2) && betweenEx (y, playerY - obstacleSize / 2 - playerSize / 2, playerY + obstacleSize / 2 + playerSize / 2);
@@ -1631,12 +1661,22 @@ class ScreenNode extends Node {
         return;
       }
     
-    for (Obstacle ob : obstacles) {
+    boolean a = false;
+    
+    for (int i = drawIndex; i < obstacles.length; i ++) {
       
-      if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
-        lastVal = true;
-        iterateOutputs (true);
-        return;
+      Obstacle ob = obstacles[i];
+      
+      if (betweenIn(ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+        a = true;
+        
+        if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
+          lastVal = true;
+          iterateOutputs (true);
+          return;
+        }
+      } else if (a) {
+        break;
       }
     }
     
