@@ -26,6 +26,6 @@ TL;DR: download the file you need, extract it and execute the executable file.
 
 2  Extract the files from the .zip file (they should be in a folder named "GDE level editor").
 
-3a Execute the "GDE_leveleditor" file contained int the "GDE" folder. If this fails, try step 3b before retrying.
+3a Execute the "GDE_leveleditor" file contained in the "GDE" folder. If this fails, try step 3b before retrying.
 
 3b Set the executable flag for the file (make the file executable). On Ubuntu and similar distributions, this can usually be done by right-clicking the "GDE" file, selecting "Properties" and setting the Execute option (under the "Rights" tab) to something like "Owner only".
