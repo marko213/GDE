@@ -72,9 +72,9 @@ class Obstacle {
     return ret;
   }
   
-  boolean inDrawingRegion () {
+  /*boolean inDrawingRegion () {
     return betweenIn (x, camX - obstacleSize / 2, camX + sizeX + obstacleSize / 2) && betweenIn (y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
-  }
+  }*/
   
   boolean inCollisionRegion () {
     return betweenEx (x, playerX - obstacleSize / 2 - playerSize / 2, playerX + obstacleSize / 2 + playerSize / 2) && betweenEx (y, playerY - obstacleSize / 2 - playerSize / 2, playerY + obstacleSize / 2 + playerSize / 2);

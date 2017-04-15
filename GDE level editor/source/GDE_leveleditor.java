@@ -44,6 +44,7 @@ boolean shiftDown = false; // Is the shift key held down?
 int camXVel = 0;           // How much to move the camera in edit mode (x axis)
 int camYVel = 0;           // How much to move the camera in edit mode (y axis)
 int camMoveVel = 6;        // Speed to apply to the camera (pixels per one 60-th of a second)
+int drawIndex = 0;
 
 ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
 Obstacle tempObstacle = new Obstacle(100, 100, false, false);
@@ -130,9 +131,9 @@ class Obstacle {
     return ret;
   }
   
-  public boolean inDrawingRegion () {
+  /*boolean inDrawingRegion () {
     return betweenIn(x, camX - obstacleSize / 2, camX + width + obstacleSize / 2) && betweenIn(y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2); 
-  }
+  }*/
   
   public boolean inCollisionRegion() {
     return betweenEx(x, playerX - obstacleSize / 2 - playerSize / 2, playerX + obstacleSize / 2 + playerSize / 2) && betweenEx(y, playerY - obstacleSize / 2 - playerSize / 2, playerY + obstacleSize / 2 + playerSize / 2);
@@ -144,7 +145,7 @@ public void keyPressed() {
   char k = Character.toLowerCase(key);
   switch(k){
     case 'r':
-      initRun();
+      initRun ();
       break;
     
     case ' ':
@@ -184,7 +185,11 @@ public void keyPressed() {
       for (Obstacle o : obstacles)
         o.x -= 50;
       break;
-      
+    
+    case 'x':
+      obstacles = quickSort (obstacles);
+      break;
+        
     default:
       if (key == CODED) {
         switch (keyCode) {
@@ -211,6 +216,33 @@ public void keyPressed() {
       }
       break;
   }
+}
+
+public ArrayList<Obstacle> quickSort (ArrayList<Obstacle> i) {
+  if (i.size () <= 1)
+    return i;
+  
+  ArrayList<Obstacle> g = new ArrayList<Obstacle> ();
+  ArrayList<Obstacle> e = new ArrayList<Obstacle> ();
+  ArrayList<Obstacle> l = new ArrayList<Obstacle> ();
+  
+  int c = i.get (0).x;
+  
+  for (Obstacle o : i) {
+    if (o.x > c)
+      g.add (o);
+    else if (o.x == c)
+      e.add (o);
+    else
+      l.add (o);
+  }
+  
+  l = quickSort (l);
+  l.addAll (e);
+  l.addAll (quickSort (g));
+  
+  return l;
+  
 }
 
 public void keyReleased() {
@@ -282,25 +314,36 @@ public void setup(){
   size(sizeX,sizeY);
   floorLevel = height - 200;
   loadLevel();
-  initRun();
+  initRun ();
 }
 
-public void initRun() {
+public void initRun () {
+  drawIndex = 0;
   playerX = 40;
   playerY = 0;
   playerVelY = 0f;
   playerVelX = 5;
+  camX = 0;
+  camY = 0;
   gravity = abs(gravity);
   restartTime = 0;
 }
 
 public void draw() {
   
+  if (paused && mousePressed) {
+    if (mouseButton == LEFT && !shiftDown) // Add current object to world
+      placeObject ();
+    else if (mouseButton == RIGHT) // Remove all obstacles behind the mouse
+      removeBehind ();
+  }
+  
   background(100, 230, 100);
+  
   if(restartTime == 0 && !paused) {
     iterate();
   }
-  
+
   if(!paused) {
     camX = max(playerX - width / 2, 0);
     camY = max(playerY - (height - floorLevel), 0);
@@ -316,9 +359,18 @@ public void draw() {
     drawPlayer();
   }
   
-  for(Obstacle o : obstacles) {
-    if(o.inDrawingRegion()) {
-      o.draw();
+  boolean a = false;
+  
+  for(int i = (paused ? 0 : drawIndex); i < obstacles.size (); i ++) { 
+    
+    Obstacle o = obstacles.get (i);
+    
+    if(betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      a = true;
+      if (betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        o.draw();
+    } else if (a) {
+      break;
     }
   }
   
@@ -347,26 +399,18 @@ public void draw() {
     text("Dead", width / 2 - 60, height / 2 - 30, 100, 50);
     restartTime --;
     if (restartTime == 0) {
-      initRun();
+      initRun ();
     }
   }
 }
 
 public void mousePressed() {
   if (paused) {
-    if (mouseButton == LEFT) { // Add curent object to world
-      
-      if(!shiftDown) {
-        removeFromPos(tempObstacle.x, tempObstacle.y + 1);
-      }
-      obstacles.add(tempObstacle);
-      tempObstacle = tempObstacle.clone();
-      
-    } else if (mouseButton == RIGHT){ // Remove all obstacles behind the mouse
-      
-      removeFromPos(mouseX + camX, floorLevel - mouseY + camY);
-      
-    } else { // Clone the first (drawn on top) obstacle to tempObstacle
+    if (mouseButton == LEFT) // Add current object to world
+      placeObject ();
+    else if (mouseButton == RIGHT) // Remove all obstacles behind the mouse
+      removeBehind ();
+    else { // Clone the first (drawn on top) obstacle to tempObstacle
       
       int x = mouseX + camX;
       int y = floorLevel - mouseY + camY;
@@ -382,6 +426,28 @@ public void mousePressed() {
       }
     }
   }
+}
+
+public void placeObject () {
+  if(!shiftDown) {
+    removeFromPos(tempObstacle.x, tempObstacle.y + 1);
+  }
+  
+  for (int i = 0; i < obstacles.size (); i++) {
+    if (obstacles.get (i).x > tempObstacle.x) {
+      obstacles.add (i, tempObstacle);
+      break;
+    }
+  }
+  
+  if (obstacles.indexOf (tempObstacle) == -1)
+    obstacles.add(tempObstacle);
+  
+  tempObstacle = tempObstacle.clone();
+}
+
+public void removeBehind () {
+  removeFromPos(mouseX + camX, floorLevel - mouseY + camY);
 }
 
 public void removeFromPos(int x, int y) {
@@ -467,14 +533,31 @@ public void checkColl () {
   
   float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
   
-  for (Obstacle o : obstacles) {
+  boolean a = false;
+  
+  for (int i = drawIndex; i < obstacles.size (); i ++) {
+    Obstacle o = obstacles.get (i);
+    
+    if (betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      if (!a) {
+        a = true;
+        drawIndex = i;
+      }
+      if (!betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        continue;
+    } else {
+      if (a)
+        break;
+      continue;
+    }
+    
     if (!o.triangle) {
       boxes.add (o);
     } else {
       triangles.add (o);
-      continue;
     }
   }
+  
   if (playerVelY <= 0f) { // Player can only be raised if it's moving down
   
     int tempY = playerY; // Store Y value to be raised to
@@ -630,7 +713,7 @@ public void loadLevel() {
       TableRow row = table.getRow(i);
       obstacles.add(new Obstacle(row.getInt("x"), row.getInt("y"), row.getInt("triangle") == 1, row.getInt("flipped") == 1));
     }
-    initRun();
+    initRun ();
   }
   f = null;
 }

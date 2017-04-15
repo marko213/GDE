@@ -23,12 +23,22 @@ class ScreenNode extends Node {
         return;
       }
     
-    for (Obstacle ob : obstacles) {
+    boolean a = false;
+    
+    for (int i = drawIndex; i < obstacles.length; i ++) {
       
-      if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
-        lastVal = true;
-        iterateOutputs (true);
-        return;
+      Obstacle ob = obstacles[i];
+      
+      if (betweenIn(ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+        a = true;
+        
+        if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
+          lastVal = true;
+          iterateOutputs (true);
+          return;
+        }
+      } else if (a) {
+        break;
       }
     }
     
