@@ -22,5 +22,5 @@ TL;DR: download the file you need, extract it and execute the executable file.
 
 <p>1  Download the matching file for your system (either 64-bit or 32-bit).</p>
 <p>2  Extract the files from the .zip file (they should be in a folder named "GDE").</p>
-<p>3a Execute the "GDE" file contained int the "GDE" folder. If this fails, try step 3b before retrying.</p>
+<p>3a Execute the "GDE" file contained in the "GDE" folder. If this fails, try step 3b before retrying.</p>
 <p>3b Set the executable flag for the file (make the file executable). On Ubuntu and similar distributions, tyhis can usually be done by right-clicking the "GDE" file, selecting "Properties" and setting the Execute option (under the "Rights" tab) to something like "Owner only".</p>
