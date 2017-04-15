@@ -38,7 +38,7 @@ Idea inspired by carykh's evolutionMATH2 https://www.youtube.com/watch?v=5N7NYc7
 
 # Additional notes
 
-<p>Neither of the two levels in the data folder (level.gdat and level_old.gdat) has been solved yet by GDE. The levels are quite easy and can be played manually using the GDE level editor.</p>
+<p>Only one of the two included levels have been solved (level.gdat) (as of v0.3.1-alpha). The levels are quite easy and can be played manually using the GDE level editor.</p>
 
 <p>The creatures do not have any kind of memory - if any creature comes across identical sections of the level, it has to do the same for both of the sections. This can make some complicated levels impossible to beat by the GDE.</p>
 
