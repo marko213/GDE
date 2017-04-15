@@ -26,6 +26,7 @@ int endX;                  // X position that needs to be reached to win
 
 int camX = 0;              // Position of the camera (X axis)
 int camY = 0;              // Position of the camera (Y axis)
+int drawIndex = 0;
 
 int genId = 1;             // Id of the generation (1 - ...)
 
@@ -156,10 +157,13 @@ void setup (){
 }
 
 void initRun () {
+  drawIndex = 0;
   playerX = 40;
   playerY = 0;
   playerVelY = 0f;
   playerVelX = 5;
+  camX = 0;
+  camY = 0;
   gravity = abs (gravity);
   restartTime = 0;
   won = false;
@@ -170,9 +174,9 @@ void initRun () {
 void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
+  genId ++;
   if (generations.size () > 2) {
     generations.remove (0);
-    genId++;
   }
 }
 
@@ -202,9 +206,18 @@ void draw () {
     drawPlayer ();
   }
   
-  for (Obstacle o : obstacles) {
-    if (o.inDrawingRegion ()) {
-      o.draw ();
+  boolean a = false;
+  
+  for(int i = (paused ? 0 : drawIndex); i < obstacles.length; i ++) { 
+    
+    Obstacle o = obstacles[i];
+    
+    if(betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      a = true;
+      if (betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        o.draw();
+    } else if (a) {
+      break;
     }
   }
   
@@ -445,14 +458,31 @@ void checkColl () {
   
   float prevY = playerY - playerVelY, prevX = playerX - playerVelX; // Get previous position
   
-  for (Obstacle o : obstacles) {
+  boolean a = false;
+  
+  for (int i = drawIndex; i < obstacles.length; i ++) {
+    Obstacle o = obstacles[i];
+    
+    if (betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      if (!a) {
+        a = true;
+        drawIndex = i;
+      }
+      if (!betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        continue;
+    } else {
+      if (a)
+        break;
+      continue;
+    }
+    
     if (!o.triangle) {
       boxes.add (o);
     } else {
       triangles.add (o);
-      continue;
     }
   }
+  
   if (playerVelY <= 0f) { // Player can only be raised if it's moving down
   
     int tempY = playerY; // Store Y value to be raised to
