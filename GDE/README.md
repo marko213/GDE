@@ -43,7 +43,7 @@ Idea inspired by carykh's evolutionMATH2 https://www.youtube.com/watch?v=5N7NYc7
 
 <p>The creatures do not have any kind of memory - if any creature comes across identical sections of the level, it has to do the same for both of the sections. This can make some complicated levels impossible to beat by the GDE.</p>
 
-<p>As this is a very early testing version of GDE, many bugs may occur. If GDE does not work properly or you come across any bugs (not mentioned in issue tracker), please add that bug to the tracker.</p>
+<p>As this is a very early testing version of GDE, many bugs may occur. If GDE does not work properly or you come across any bugs (not mentioned in the issue tracker), please add that bug to the tracker.</p>
 
 <p>Suggestions for a better distribution of mutations (see source) are welcome. (Any kind of suggestions are welcome, but the mutation system seems to be the most broken.)</p>
 
