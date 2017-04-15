@@ -7,7 +7,7 @@ Idea inspired by carykh's evolutionMATH2 https://www.youtube.com/watch?v=5N7NYc7
 <p>GDE tries to simulate computer evolution in a simple platformer-like (2D) game. The game consists of a cube (the player), which is moving to the right at a constant speed. The player only has one way of control over the cube: jumping. The cube can jump when it is on the ground or on a box. Every jump is always of the same height - attempting to jump (or hold the jump buton etc.) while in the air has no effect on the trajectory of the player.</p>
 
 <p>Obstructing the player's path there are two types of obstacles: boxes and triangles. Boxes act like platforms - the cube can slide freely on them and jump off them. However, colliding with the boxes from the side or from below will "kill" the cube. Triangles act like (very) deadly spikes. Coming into contact with them from any angle, at any velocity will "kill" the cube.
-(_Passing below a (non-flipped) triangle or sliding from a box to the tip of a triangle will also kill the player. This may be changed._)</p>
+(<i>Passing below a (non-flipped) triangle or sliding from a box to the tip of a triangle will also kill the player. This may be changed.</i>)</p>
 <br></br>
 
 
