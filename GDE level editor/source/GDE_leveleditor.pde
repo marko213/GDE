@@ -332,6 +332,7 @@ void draw() {
     camX = max(playerX - width / 2, 0);
     camY = max(playerY - (height - floorLevel), 0);
   } else {
+    drawIndex = 0;
     camX = max(camX + (shiftDown? camXVel / 2 : camXVel), 0);
     camY = max(camY + (shiftDown? camYVel / 2 : camYVel), 0);
   }
@@ -345,7 +346,7 @@ void draw() {
   
   boolean a = false;
   
-  for(int i = (paused ? 0 : drawIndex); i < obstacles.size (); i ++) { 
+  for(int i = drawIndex; i < obstacles.size (); i ++) { 
     
     Obstacle o = obstacles.get (i);
     
