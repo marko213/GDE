@@ -365,6 +365,12 @@ class Creature {
     
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
+    if (random (1) < 0.2f) { // Slightly adjust the screenNode (1/5 chance)
+      sn.x = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.x;
+      sn.y = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.y;
+      return;
+    }
+    
     // Move the ScreenNode
     int px = sn.x, py = sn.y;
     sn.x = ((int) random (sizeX / 50 - 1)) * 50 + 25;
@@ -394,7 +400,7 @@ class Creature {
             sn.x = px;
             sn.y = py;
           }
-          break;
+          return;
         }
       }
     }
