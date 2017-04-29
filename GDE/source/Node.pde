@@ -45,6 +45,6 @@ class Node {
       fill (200, 60, 60);
     }
     
-    rect (layer * sidebarWidth / 11 + 10 + sizeX + 1, yOffset + 200, nodeSize, nodeSize);
+    rect (layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1, yOffset + 205, nodeSize, nodeSize);
   }
 }
