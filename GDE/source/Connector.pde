@@ -49,9 +49,9 @@ class Connector {
     }
     
     if (input instanceof ScreenNode) {
-      line ((float) (((ScreenNode) input).x + nodeSize / 2), (float) (height - ((ScreenNode)input).y), (float) (sizeX + output.layer * sidebarWidth / 11 + 10), (float) (output.yOffset + nodeSize / 2 + 200 + (outputOne ? -6 : 6)));
+      line ((float) (((ScreenNode) input).x + nodeSize / 2), (float) (height - ((ScreenNode)input).y), (float) (output.layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1), (float) (output.yOffset + nodeSize / 2 + 205 + (outputOne ? -6 : 6)));
     } else {
-      line ((float) (sizeX + input.layer * sidebarWidth / 11 + nodeSize + 10), (float) (input.yOffset + nodeSize / 2 + 200), (float) (sizeX + output.layer * sidebarWidth / 11 + 10), (float) (output.yOffset + nodeSize / 2 + 200 + (outputOne ? -6 : 6)));
+      line ((float) (input.layer * sidebarWidth / 11 + sidebarWidth / 22 + nodeSize / 2 + sizeX + 1), (float) (input.yOffset + nodeSize / 2 + 205), (float) (output.layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1), (float) (output.yOffset + nodeSize / 2 + 205 + (outputOne ? -6 : 6)));
     }
   }
 }

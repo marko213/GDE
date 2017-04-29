@@ -36,6 +36,14 @@ class Generation {
     
     n = quickSort (n);
     
+    drawSingle (n);
+    
+    int[] t = new int[2];
+    t[0] = n.get (0).fitness;
+    t[1] = n.get (n.size () / 2).fitness;
+    records.add (t);
+    drawGens ();
+    
     ArrayList<Creature> cr = new ArrayList<Creature> (100);
     
     // Killing code heavily inspired by evolutionMath2 by carykh

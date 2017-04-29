@@ -14,7 +14,7 @@ import java.io.IOException;
 
 public class GDE extends PApplet {
 
- // This project / code inspired by carykh's evolutionMATH2
+// This project / code inspired by carykh's evolutionMATH2
 // https://www.youtube.com/watch?v=5N7NYc7PPf8
 
 int obstacleSize = 50;     // Size of obstacle collision / drawing box (should be 50 for compat reasons)
@@ -31,7 +31,7 @@ int restartTime = 0;       // Time for when to start new run
 boolean won = false;       // Has the player won (on the current run)?
 int sizeX = 800;           // Size of the play area (X axis)
 int sizeY = 750;           // Size of the window (Y axis)
-int sidebarWidth = 500;    // Width of the sidebar
+int sidebarWidth = 750;    // Width of the sidebar
 
 int playerX;               // Current position of the player (X axis)
 int playerY;               // Current position of the player (Y axis)
@@ -53,15 +53,17 @@ boolean gASAP = false;     // Should the generations be done ASAP?
 boolean hasWon = false;    // Has this evolution won the level?
 
 Obstacle[] obstacles;
-PGraphics boxGraphics, triangleGraphics, flippedTriangleGraphics, networkBgGraphics, singleGraphics, fullGraphics;
+PGraphics boxGraphics, triangleGraphics, flippedTriangleGraphics, networkBgGraphics, singleGraphics, genGraphics;
 
-ArrayList<Generation> generations = new ArrayList<Generation> ();
-ArrayList<Record> records = new ArrayList<Record> ();
+ArrayList<Generation> generations = new ArrayList<Generation> (); // ArrayList to hold generations (deprecated as of Alpha 0.3.1 ?)
+ArrayList<int[]> records = new ArrayList<int[]> ();
 
 int creatureId = 0;
 int networkDrawMode = 1; // 0 - normal, draw normal nodes & connectors; 1 - extended, also draw screen nodes; 2 - hidden, only draw output
-int nodeSize = sidebarWidth / 11 - 20;
+int nodeSize = 25;
 int processSpeed = 1; // How many iterations to do for each frame
+
+String levelName;
 
 public void keyPressed () {
   char k = Character.toLowerCase (key);
@@ -79,7 +81,8 @@ public void keyPressed () {
       break;
       
     case 'l':
-      loadLevel ();
+      // loadLevel ();
+      selectInput ("Select a level file", "afterSelect");
       break;
       
     case 'n':
@@ -112,17 +115,23 @@ public void keyPressed () {
   }
 }
 
+public void afterSelect (File sel) {
+  if (sel == null || !sel.getName ().endsWith (".gdat") || !sel.exists ())
+    return;
+  loadLevel (sel);
+}
+
 public void setup (){
   frameRate (60);
   randomSeed (213);
-  
+  levelName = dataPath ("level.gdat");
   boxGraphics = createGraphics (obstacleSize, obstacleSize);
   triangleGraphics = createGraphics (obstacleSize, obstacleSize);
   flippedTriangleGraphics = createGraphics (obstacleSize, obstacleSize);
   networkBgGraphics = createGraphics (sidebarWidth, 349);
   
   singleGraphics = createGraphics (sidebarWidth / 2, 300);
-  drawSingle (new ArrayList<Creature> ());
+  genGraphics = createGraphics (sidebarWidth / 2, 300);
   
   boxGraphics.beginDraw ();
   boxGraphics.noStroke ();
@@ -166,9 +175,10 @@ public void setup (){
   
   size (sizeX + sidebarWidth, sizeY);
   floorLevel = 550;
-  loadLevel ();
   generations.add (new Generation ());
-  
+  int[] t = {0, 0};
+  records.add (t);
+  loadLevel (new File (levelName));
   initRun ();
 }
 
@@ -185,6 +195,7 @@ public void initRun () {
   won = false;
   camX = max (playerX - sizeX / 2, 0);
   camY = max (playerY - (height - floorLevel), 0);
+  generations.get (generations.size () - 1).creatures[creatureId].iterate ();
 }
 
 public void endGeneration () {
@@ -294,7 +305,7 @@ public void drawSidebar () {
   rect (sizeX + 30, 30, sidebarWidth - 60, 40);
   fill (0);
   textSize (24);
-  text ("Restart / generate new first gen", sizeX + 70, 60);
+  text ("Restart / generate new first gen", sizeX + 200, 60);
   
   // "Do the rest of this generation" button
   if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 130, width - 30, 90)) { // Mouse on the button
@@ -305,7 +316,7 @@ public void drawSidebar () {
   rect (sizeX + 30, 90, sidebarWidth - 60, 40);
   fill (0);
   textSize (24);
-  text ("Do the rest of this generation ASAP", sizeX + 50, 120);
+  text ("Do the rest of this generation ASAP", sizeX + 180, 120);
   
   // "Do generations ASAP" button
   if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 190, width - 30, 150)) { // Mouse on the button
@@ -324,7 +335,7 @@ public void drawSidebar () {
   rect (sizeX + 30, 150, sidebarWidth - 60, 40);
   fill (0);
   textSize (24);
-  text ("Do generations ASAP", sizeX + 140, 180);
+  text ("Do generations ASAP", sizeX + 262, 180);
   
   // Background for network map
   image (networkBgGraphics, sizeX + 1, 100);
@@ -332,6 +343,7 @@ public void drawSidebar () {
   generations.get (generations.size () - 1).creatures[creatureId].draw ();
   
   image (singleGraphics, sizeX + 1, 449);
+  image (genGraphics, sizeX + sidebarWidth / 2 + 1, 449);
   
   // The information text
   textSize (24);
@@ -413,7 +425,6 @@ public void mouseClicked () {
     genId = 1;
     creatureId = 0;
     hasWon = false;
-    records.clear ();
     initRun ();
   } else if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 130, width - 30, 90)) {
     doGenASAP ();
@@ -645,34 +656,194 @@ public void drawPlayer () {
 
 public void drawSingle (ArrayList<Creature> creatures) {
   singleGraphics.beginDraw ();
+  singleGraphics.noSmooth ();
   singleGraphics.noStroke ();
-  singleGraphics.fill (200);
-  singleGraphics.rect (0, 0, sidebarWidth / 2 - 1, 300);
+  singleGraphics.background (200);
+  singleGraphics.fill (255);
+  singleGraphics.rect (20, 20, sidebarWidth / 2 - 41, 260);
+  singleGraphics.textSize (15);
+  singleGraphics.smooth ();
+  singleGraphics.fill (0);
+  singleGraphics.text ("Amount of level completed (last generation)", 25, 16);
+  singleGraphics.noSmooth ();
+  
   if (creatures.size () == 0) {
+    singleGraphics.endDraw ();
+    return;
+  }
+  
+  int max = ceil (((float) creatures.get (0).fitness) / ((float) endX) * 100f);
+  int min = floor (((float) creatures.get (creatures.size () - 1).fitness) / ((float) endX) * 100f);
+  
+  int density = (max - min <= 10) ? 10 : (max - min <= 20) ? 5 : 2;
+  
+  singleGraphics.stroke (200);
+  singleGraphics.strokeCap (RECT);
+  singleGraphics.strokeWeight (1);
+  singleGraphics.fill (0);
+  singleGraphics.textSize (8);
+  
+  for (int i = density; i <= 100; i += density) {
+    if (i % (10 / density) == 0) {
+      singleGraphics.smooth ();
+      singleGraphics.text ((max - (100 - i) / density) + "%", 0, 284 - i * 260 / 100);
+      singleGraphics.noSmooth ();
+    }
     
+    if ((max - (100 - i) / density) % 50 == 0) {
+        singleGraphics.stroke (100);
+        if ((max - (100 - i) / density) == 0)
+          singleGraphics.strokeWeight (2);
+        singleGraphics.line (20, 280 - i * 260 / 100, sidebarWidth / 2 - 22, 280 - i * 260 / 100);
+        singleGraphics.stroke (200);
+        singleGraphics.strokeWeight (1);
+        continue;
+      }
+    
+    singleGraphics.line (20, 280 - i * 260 / 100, sidebarWidth / 2 - 22, 280 - i * 260 / 100);
+  }
+  
+  for (float i = 20f + 0.05f * ((float) (sidebarWidth / 2 - 42)); i < sidebarWidth / 2 - 22; i += 0.05f * ((float) (sidebarWidth / 2 - 42))) {
+    if (round (i * 10) == round((0.5f * ((float) (sidebarWidth / 2 - 42)) + 20f) * 10)) {
+      singleGraphics.stroke (100);
+      singleGraphics.line (round (i), 20, round (i), 280);
+      singleGraphics.stroke (200);
+      continue;
+    }
+    singleGraphics.line (round (i), 20, round (i), 280);
+  }
+  
+  singleGraphics.stroke (0);
+  
+  
+  // Alternative graph
+  /*int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+  
+  for (int i = 20; i < sidebarWidth / 2 - 21; i ++) {
+    int k = 280 - round (2.6f * (((float) creatures.get (round ((((float) i) - 20f) / ((float) (sidebarWidth / 2 - 21)) * ((float)(creatures.size () - 1)))).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+    
+    if (k > 280) {
+      singleGraphics.line (i, j, i, 280);
+      break;
+    }
+      
+    singleGraphics.line (i, j, i, k);
+    j = k;
+  }*/
+  
+  singleGraphics.strokeWeight (2);
+  singleGraphics.smooth ();
+  
+  int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+  int px = 20;
+  
+  for(int i = 0; i < creatures.size (); i ++) {
+    int k = 280 - round (2.6f * (((float) creatures.get (i).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+    
+    int x = round((((float) i) / ((float) (creatures.size () - 1)) * ((float)(sidebarWidth / 2 - 41)))) + 20;
+    if (k > 280) {
+      singleGraphics.line (px, j, x, 280);
+      break;
+    }
+      
+    singleGraphics.line (px, j, x, k);
+    j = k;
+    px = x;
   }
   
   singleGraphics.endDraw ();
 }
 
-public void loadLevel () {
-  File f = new File (dataPath ("level.gdat")); // !!! File hardcoded !!!, needs to be done here, not in the beginning definitions (otherwise the path is incorrect)
-  if (!f.exists ()) {
+public void drawGens () {
+  genGraphics.beginDraw ();
+  
+  genGraphics.noSmooth ();
+  genGraphics.noStroke ();
+  genGraphics.background (200);
+  genGraphics.fill (255);
+  genGraphics.rect (20, 20, sidebarWidth / 2 - 41, 260);
+  genGraphics.textSize (15);
+  genGraphics.fill (0);
+  genGraphics.smooth ();
+  genGraphics.text ("Amount of level completed (each generation)", 25, 16);
+  
+  int max = records.get (records.size () - 1)[0];
+  
+  genGraphics.stroke (200);
+  genGraphics.strokeWeight (1);
+  genGraphics.textSize (8);
+  
+  int density = (max * 100 / endX > 25 ? (max * 100 / endX > 50 ? 4 : 2) : 1);
+  
+  for (int i = density; i <= max * 100 / endX; i += density) {
+    int h = 280 - ceil (((float) i) * 260f / ((float)(max * 100 / endX)));
+    genGraphics.line (20, h, sidebarWidth / 2 - 21, h);
+    
+    genGraphics.text (i + "%", 0, h + 4);
+  }
+  
+  genGraphics.stroke (200, 100, 100);
+  genGraphics.strokeWeight (2);
+  int py = 280 - round (((float) records.get (0)[1]) * 260f / ((float) max));
+  int px = 20;
+  for (int i = 0; i < records.size (); i++) {
+    int x = 20 + round (((float) i) * (((float) sidebarWidth) / 2f - 41f) / ((float) records.size () - 1f));
+    int y = 280 - round (((float) records.get (i)[1]) * 260f / ((float) max));
+    genGraphics.line (px, py, x, y);
+    
+    py = y;
+    px = x;
+  }
+  
+  genGraphics.line (85, 290, 95, 290);
+  genGraphics.textSize (12);
+  genGraphics.text ("Median", 100, 295);
+  genGraphics.textSize (8);
+  
+  genGraphics.stroke (0);
+  
+  py = 280 - round (((float) records.get (0)[1]) * 260f / ((float) max));
+  px = 20;
+  for (int i = 0; i < records.size (); i++) {
+    int x = 20 + round (((float) i) * (((float) sidebarWidth) / 2f - 41f) / ((float) records.size () - 1f));
+    int y = 280 - round (((float) records.get (i)[0]) * 260f / ((float) max));
+    genGraphics.line (px, py, x, y);
+    
+    py = y;
+    px = x;
+  }
+  
+  genGraphics.line (205, 290, 215, 290);
+  genGraphics.textSize (12);
+  genGraphics.text ("Best", 220, 295);
+  
+  genGraphics.endDraw ();
+}
+
+public void loadLevel (File f) {
+  if (!f.exists ()) { // Failsafe
     obstacles = new Obstacle[0];
   } else {
-    Table table = loadTable (dataPath ("level.gdat"), "header, csv"); // Gets stuck somewhere if loaded file isn't an expected table. Refer to instructions.txt for some solutions
-    obstacles = new Obstacle[table.getRowCount ()];
-    endX = 0;
-    for (int i = 0; i < table.getRowCount (); i++) {
-      TableRow row = table.getRow (i);
-      obstacles[i] = new Obstacle (row.getInt ("x"), row.getInt ("y"), row.getInt ("triangle") == 1, row.getInt ("flipped") == 1);
-      if (obstacles[i].x > endX - 300) {
-        endX = obstacles[i].x + 300;
+    try {
+      Table table = loadTable (f.getCanonicalPath (), "header, csv"); // Gets stuck somewhere if loaded file isn't an expected table. Refer to GDE level editor/README.md on GitHub for some solutions
+      
+      obstacles = new Obstacle[table.getRowCount ()];
+      endX = 0;
+      for (int i = 0; i < table.getRowCount (); i++) {
+        TableRow row = table.getRow (i);
+        obstacles[i] = new Obstacle (row.getInt ("x"), row.getInt ("y"), row.getInt ("triangle") == 1, row.getInt ("flipped") == 1);
+        if (obstacles[i].x > endX - 300) {
+          endX = obstacles[i].x + 300;
+        }
       }
+      initRun ();
+    } catch (IOException e) {
+      println (e.getStackTrace ());
     }
-    initRun ();
   }
   f = null;
+  drawSingle (new ArrayList<Creature> ());
+  drawGens ();
 }
 class Connector {
   
@@ -725,9 +896,9 @@ class Connector {
     }
     
     if (input instanceof ScreenNode) {
-      line ((float) (((ScreenNode) input).x + nodeSize / 2), (float) (height - ((ScreenNode)input).y), (float) (sizeX + output.layer * sidebarWidth / 11 + 10), (float) (output.yOffset + nodeSize / 2 + 200 + (outputOne ? -6 : 6)));
+      line ((float) (((ScreenNode) input).x + nodeSize / 2), (float) (height - ((ScreenNode)input).y), (float) (output.layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1), (float) (output.yOffset + nodeSize / 2 + 205 + (outputOne ? -6 : 6)));
     } else {
-      line ((float) (sizeX + input.layer * sidebarWidth / 11 + nodeSize + 10), (float) (input.yOffset + nodeSize / 2 + 200), (float) (sizeX + output.layer * sidebarWidth / 11 + 10), (float) (output.yOffset + nodeSize / 2 + 200 + (outputOne ? -6 : 6)));
+      line ((float) (input.layer * sidebarWidth / 11 + sidebarWidth / 22 + nodeSize / 2 + sizeX + 1), (float) (input.yOffset + nodeSize / 2 + 205), (float) (output.layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1), (float) (output.yOffset + nodeSize / 2 + 205 + (outputOne ? -6 : 6)));
     }
   }
 }
@@ -1098,6 +1269,12 @@ class Creature {
     
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
+    if (random (1) < 0.2f) { // Slightly adjust the screenNode (1/5 chance)
+      sn.x = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.x;
+      sn.y = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.y;
+      return;
+    }
+    
     // Move the ScreenNode
     int px = sn.x, py = sn.y;
     sn.x = ((int) random (sizeX / 50 - 1)) * 50 + 25;
@@ -1127,7 +1304,7 @@ class Creature {
             sn.x = px;
             sn.y = py;
           }
-          break;
+          return;
         }
       }
     }
@@ -1449,6 +1626,14 @@ class Generation {
     
     n = quickSort (n);
     
+    drawSingle (n);
+    
+    int[] t = new int[2];
+    t[0] = n.get (0).fitness;
+    t[1] = n.get (n.size () / 2).fitness;
+    records.add (t);
+    drawGens ();
+    
     ArrayList<Creature> cr = new ArrayList<Creature> (100);
     
     // Killing code heavily inspired by evolutionMath2 by carykh
@@ -1548,7 +1733,7 @@ class Node {
       fill (200, 60, 60);
     }
     
-    rect (layer * sidebarWidth / 11 + 10 + sizeX + 1, yOffset + 200, nodeSize, nodeSize);
+    rect (layer * sidebarWidth / 11 + sidebarWidth / 22 - nodeSize / 2 + sizeX + 1, yOffset + 205, nodeSize, nodeSize);
   }
 }
 class Obstacle {
@@ -1632,9 +1817,6 @@ class Obstacle {
   public boolean inCollisionRegion () {
     return betweenEx (x, playerX - obstacleSize / 2 - playerSize / 2, playerX + obstacleSize / 2 + playerSize / 2) && betweenEx (y, playerY - obstacleSize / 2 - playerSize / 2, playerY + obstacleSize / 2 + playerSize / 2);
   }
-}
-class Record {
-  
 }
 class ScreenNode extends Node {
   
