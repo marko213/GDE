@@ -47,8 +47,6 @@ int networkDrawMode = 1; // 0 - normal, draw normal nodes & connectors; 1 - exte
 int nodeSize = 25;
 int processSpeed = 1; // How many iterations to do for each frame
 
-String levelName;
-
 void keyPressed () {
   char k = Character.toLowerCase (key);
   switch (k){
@@ -74,11 +72,21 @@ void keyPressed () {
       break;
       
     case '+':
+      if (processSpeed == 0) {
+        frameRate (60);
+        processSpeed = 1;
+        break;
+      }
+      
       processSpeed = min (processSpeed * 2, 512);
       break;
       
     case '-':
-      processSpeed = max (processSpeed / 2, 1);
+      if (processSpeed == 1) {
+        frameRate (30);
+        processSpeed = 0;
+      } else if (processSpeed > 1)
+        processSpeed = max (processSpeed / 2, 1);
       break;
       
     case 'o':
@@ -108,7 +116,6 @@ void afterSelect (File sel) {
 void setup (){
   frameRate (60);
   randomSeed (213);
-  levelName = dataPath ("level.gdat");
   boxGraphics = createGraphics (obstacleSize, obstacleSize);
   triangleGraphics = createGraphics (obstacleSize, obstacleSize);
   flippedTriangleGraphics = createGraphics (obstacleSize, obstacleSize);
@@ -159,11 +166,7 @@ void setup (){
   
   size (sizeX + sidebarWidth, sizeY);
   floorLevel = 550;
-  generations.add (new Generation ());
-  int[] t = {0, 0};
-  records.add (t);
-  loadLevel (new File (levelName));
-  initRun ();
+  loadLevel (new File (dataPath ("level.gdat")));
 }
 
 void initRun () {
@@ -198,7 +201,7 @@ void draw () {
   
   background (100, 230, 100);
   if (restartTime == 0 && !paused) {
-    for (int i = 0; i < processSpeed; i++) {
+    for (int i = 0; i < max (processSpeed, 1); i++) {
       iterate ();
       camX = max (playerX - sizeX / 2, 0);
       camY = max (playerY - (height - floorLevel), 0);
@@ -332,7 +335,7 @@ void drawSidebar () {
   // The information text
   textSize (24);
   fill (180);
-  text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + processSpeed + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
+  text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + (processSpeed == 0 ? "0.5" : processSpeed) + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
 
 void iterate () {
@@ -404,17 +407,26 @@ void doGenASAP () {
 
 void mouseClicked () {
   if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 70, width - 30, 30)) { // Mouse on restart / new gen button
-    generations.clear ();
-    generations.add (new Generation ());
-    genId = 1;
-    creatureId = 0;
-    hasWon = false;
-    initRun ();
+    restartAll ();
   } else if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 130, width - 30, 90)) {
     doGenASAP ();
   } else if (pointInBoxEx (mouseX, mouseY, sizeX + 30, 190, width - 30, 150)) {
     gASAP = !gASAP;
   }
+}
+
+void restartAll () {
+  generations.clear ();
+  generations.add (new Generation ());
+  genId = 1;
+  creatureId = 0;
+  hasWon = false;
+  drawSingle (new ArrayList<Creature> ());
+  records.clear ();
+  int[] t = {0, 0};
+  records.add (t);
+  drawGens ();
+  initRun ();
 }
 
 void checkColl () {
@@ -820,12 +832,10 @@ void loadLevel (File f) {
           endX = obstacles[i].x + 300;
         }
       }
-      initRun ();
     } catch (IOException e) {
       println (e.getStackTrace ());
     }
   }
   f = null;
-  drawSingle (new ArrayList<Creature> ());
-  drawGens ();
+  restartAll ();
 }
