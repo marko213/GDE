@@ -2,6 +2,8 @@
 
 <b>Please follow the appropiate instructions for your operating system</b>
 
+<b>The binary (built) files can be found in the releases</b>
+
 <b>Note: <i>the releases have both 32-bit and 64-bit releases. If you don't know which one you should use, the 32-bit version should work on both 32-bit and 64-bit computers.</i></b>
 
 <b>FOR MAC OS X USERS: there is no Mac OS X version as of now. Processing 2.2.1 seems to have a bug with exporting an application to OS X. This may be fixed in the future (if the Processing version is updated).</b>
