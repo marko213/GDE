@@ -7,7 +7,7 @@
 
 <p>Pressing the 'R' key will restart the current run.</p>
 
-<p>Pressing the 'L' key will load the level from the (path to the main folder)/data/level.gdat file and restart the evolution. This is also done when launching the application.</p>
+<p>Pressing the 'L' key will open a prompt for the user to select a level file, load that level and restart the level. This is also done when launching the application (the level.gdat file in the data folder will be loaded).</p>
 
 <p>Pressing the 'N' key will cycle trough the network draw modes: draw all, draw normal nodes & output and only draw output.</p>
 
