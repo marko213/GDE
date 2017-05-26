@@ -1,6 +1,6 @@
 class Generation {
 
-  static final int creaturesPerGen = 200; // Amount of creatures per generation (keep even just in case)
+  static final int creaturesPerGen = 300; // Amount of creatures per generation (keep even)
   public Creature[] creatures;
 
   public Generation () {
