@@ -658,6 +658,10 @@ public boolean betweenIn (float value, int min, int max) {
   return value <= max && value >= min;
 }
 
+public int clamp (int value, int min, int max) {
+  return min (max (value, min), max);
+}
+
 public void drawPlayer () {
   noStroke ();
   fill (0, 0, 0);
@@ -1280,8 +1284,8 @@ class Creature {
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
     if (random (1) < 0.2f) { // Slightly adjust the screenNode (1/5 chance)
-      sn.x = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.x;
-      sn.y = (int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.y;
+      sn.x = clamp ((int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.x, nodeSize / 2, sizeX - nodeSize / 2);
+      sn.y = clamp ((int) random (25) - (random (1) < 0.5f ? 12 : 13) + sn.y, nodeSize / 2, sizeY - nodeSize / 2);
       return;
     }
     
@@ -1600,7 +1604,7 @@ class Creature {
 }
 class Generation {
 
-  static final int creaturesPerGen = 200; // Amount of creatures per generation (keep even just in case)
+  static final int creaturesPerGen = 300; // Amount of creatures per generation (keep even)
   public Creature[] creatures;
 
   public Generation () {

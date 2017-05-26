@@ -642,6 +642,10 @@ boolean betweenIn (float value, int min, int max) {
   return value <= max && value >= min;
 }
 
+int clamp (int value, int min, int max) {
+  return min (max (value, min), max);
+}
+
 void drawPlayer () {
   noStroke ();
   fill (0, 0, 0);
