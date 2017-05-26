@@ -19,7 +19,7 @@
 
 <p>Pressing the 'O' key will trigger a debug output to be printed to the java standard output (can usually be seen from a command prompt window / terminal / etc. if executed from it).</p>
 
-<p>Pressing the 'E' key will toggle the lazy evaluation mode on / off. Lazy evaluation skips about a half of the creatures from generation 2 onwards. This option should only be disabled if you wish to also see the creatures 2 - 100 (from the second generation on) simulated.
+<p>Pressing the 'E' key will toggle the lazy evaluation mode on / off. Lazy evaluation skips about half of the creatures from generation 2 onwards. This option should only be disabled if you wish to also see the middle creatures (from 2 to n / 2 - 1, from the second generation on) simulated.
 
 <b>Note: this has a big impact on ASAP mode. Keep this option enabled if not needed otherwise.</b></p>
 
