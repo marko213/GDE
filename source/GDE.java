@@ -18,39 +18,40 @@ public class GDE extends PApplet {
 // https://www.youtube.com/watch?v=5N7NYc7PPf8
 
 int obstacleSize = 50;     // Size of obstacle collision / drawing box (should be 50 for compat reasons)
-int playerSize = 50;       // Size of player collision / drawing box
-int boundingWidth = 4;     // Width of the border around obstacles
-int fadePrecision = 3;     // Precision to draw obstacle color fade with (1 is the smoothest)
+int playerSize = 50;         // Size of player collision / drawing box
+int boundingWidth = 4;       // Width of the border around obstacles
+int fadePrecision = 3;       // Precision to draw obstacle color fade with (1 is the smoothest)
 
-float gravity = 0.7f;      // Simulation gravity (pixels per second per 1/60 of a second)
-float termVel = 30f;       // Terminal velocity for the player (Y axis)
-float jumpVel = 14.9f;     // Jump velocity for player
-int delayTime = 60;        // Amount of frames to wait for on death / win
+float gravity = 0.7f;        // Simulation gravity (pixels per second per 1/60 of a second)
+float termVel = 30f;         // Terminal velocity for the player (Y axis)
+float jumpVel = 14.9f;       // Jump velocity for player
+int delayTime = 60;          // Amount of frames to wait for on death / win
 
-int restartTime = 0;       // Time for when to start new run
-boolean won = false;       // Has the player won (on the current run)?
-int sizeX = 800;           // Size of the play area (X axis)
-int sizeY = 750;           // Size of the window (Y axis)
-int sidebarWidth = 750;    // Width of the sidebar
+int restartTime = 0;         // Time for when to start new run
+boolean won = false;         // Has the player won (on the current run)?
+int sizeX = 800;             // Size of the play area (X axis)
+int sizeY = 750;             // Size of the window (Y axis)
+int sidebarWidth = 750;      // Width of the sidebar
 
-int playerX;               // Current position of the player (X axis)
-int playerY;               // Current position of the player (Y axis)
-int playerVelX;            // Velocity of player (X axis) (pixels/ (1/60-th of a second))
-float playerVelY;          // Velocity of player (Y axis) (pixels/ (1/60-th of a second))
-boolean paused = false;    // Is the game currently paused? 
-int endX;                  // X position that needs to be reached to win
+int playerX;                 // Current position of the player (X axis)
+int playerY;                 // Current position of the player (Y axis)
+int playerVelX;              // Velocity of player (X axis) (pixels/ (1/60-th of a second))
+float playerVelY;            // Velocity of player (Y axis) (pixels/ (1/60-th of a second))
+boolean paused = false;      // Is the game currently paused? 
+int endX;                    // X position that needs to be reached to win
 
-int camX = 0;              // Position of the camera (X axis)
-int camY = 0;              // Position of the camera (Y axis)
-int drawIndex = 0;
+int camX = 0;                // Position of the camera (X axis)
+int camY = 0;                // Position of the camera (Y axis)
+int drawIndex = 0;           // Index in obstacles to begin drawing / checking collision from 
 
-int genId = 1;             // Id of the generation (1 - ...)
+int genId = 1;               // Id of the generation (1 - ...)
 
-int floorLevel;            // Y coordinate for the floor to be drawn from
+int floorLevel;              // Y coordinate for the floor to be drawn from
 
-boolean lazyEval = true;   // Should the simulation skip already-evaluated creatures? 
-boolean gASAP = false;     // Should the generations be done ASAP?
-boolean hasWon = false;    // Has this evolution won the level?
+boolean lazyEval = true;     // Should the simulation skip already-evaluated creatures? 
+boolean gASAP = false;       // Should the generations be done ASAP?
+boolean autoRestart = false; // Should the generations be automatically restarted?
+boolean hasWon = false;      // Has this evolution won the level?
 
 Obstacle[] obstacles;
 PGraphics boxGraphics, triangleGraphics, flippedTriangleGraphics, networkBgGraphics, singleGraphics, genGraphics;
@@ -62,6 +63,10 @@ int creatureId = 0;
 int networkDrawMode = 1; // 0 - normal, draw normal nodes & connectors; 1 - extended, also draw screen nodes; 2 - hidden, only draw output
 int nodeSize = 25;
 int processSpeed = 1; // How many iterations to do for each frame
+int restartThreshold = 100; // How many inactive (no progress made in the level) generations to wait before restarting
+int inactiveGens = 0; // How many inactive generations have already happened after last progress?
+
+final int restartThresholdMin = 10, restartThresholdMax = 5000; // Minimum and maximum for the restart threshold
 
 public void keyPressed () {
   char k = Character.toLowerCase (key);
@@ -119,6 +124,21 @@ public void keyPressed () {
     
     case 'g':
       doGenASAP ();
+      break;
+    
+    case 'x':
+      if (restartThreshold > inactiveGens || autoRestart)
+        autoRestart = !autoRestart;
+      break;
+    
+    case 'c':
+      int t = max (restartThreshold - (restartThreshold <= 50 ? 10 : (50 * (int) pow (2, max (log10 ((restartThreshold - 1) / 5) - 1, 0)) * (int) pow (5, max (log10 (restartThreshold - 1) - 2, 0)))), restartThresholdMin); // Formula used to create the sequence 10; 20; 30; 40; 50; 100; 150; ...; 450; 500; 600 ...
+      if (t > inactiveGens || !autoRestart)
+        restartThreshold = t; 
+      break;
+    
+    case 'v':
+      restartThreshold = min (restartThreshold + (restartThreshold < 50 ? 10 : (50 * (int) pow (2, max (log10 (restartThreshold / 5) - 1, 0)) * (int) pow (5, max (log10 (restartThreshold) - 2, 0)))), restartThresholdMax); // Formula used to create the sequence 10; 20; 30; 40; 50; 100; 150; ...; 450; 500; 600 ...
       break;
   }
 }
@@ -205,6 +225,10 @@ public void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
   genId ++;
+  if (autoRestart && inactiveGens > restartThreshold) {
+    restartAll ();
+    return;
+  }
   if (generations.size () > 2) {
     generations.remove (0);
   }
@@ -350,6 +374,12 @@ public void drawSidebar () {
   
   // The information text
   textSize (24);
+  if (inactiveGens < restartThreshold)
+    fill (180);
+  else
+    fill (180, 40, 40);
+    
+  text ("Automatic restarting " + (autoRestart? "en" : "dis") + "abled   " + inactiveGens + " inactive gen" + (inactiveGens == 1 ? "" : "s") + " out of " + restartThreshold, 10, height - 55, 900, 30);
   fill (180);
   text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + (processSpeed == 0 ? "0.5" : processSpeed) + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
@@ -436,6 +466,7 @@ public void restartAll () {
   generations.add (new Generation ());
   genId = 1;
   creatureId = 0;
+  inactiveGens = 0;
   hasWon = false;
   drawSingle (new ArrayList<Creature> ());
   records.clear ();
@@ -662,6 +693,10 @@ public int clamp (int value, int min, int max) {
   return min (max (value, min), max);
 }
 
+public int log10 (int n) {
+  return (int) (log (n) / log (10));
+}
+
 public void drawPlayer () {
   noStroke ();
   fill (0, 0, 0);
@@ -820,7 +855,14 @@ public void drawGens () {
   
   py = 280 - round (((float) records.get (0)[1]) * 260f / ((float) max));
   px = 20;
+  int pProgress = -1;
   for (int i = 0; i < records.size (); i++) {
+    if (records.get (i)[0] == pProgress)
+      inactiveGens ++;
+    else {
+      pProgress = records.get (i)[0];
+      inactiveGens = 0;
+    }
     int x = 20 + round (((float) i) * (((float) sidebarWidth) / 2f - 41f) / ((float) records.size () - 1f));
     int y = 280 - round (((float) records.get (i)[0]) * 260f / ((float) max));
     genGraphics.line (px, py, x, y);
