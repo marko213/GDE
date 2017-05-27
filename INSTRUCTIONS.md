@@ -3,7 +3,7 @@
 <b>These instructions apply to the GDE. The instructions for the GDE level editor can be found in the respective folder</b>
 
 <br>
-<p>Pressing the SPACE or 'P' key will pause / unpause the simulation (does not affect ASAP mode).</p>
+<p>Pressing the SPACE or 'P' key will pause / unpause the simulation.</p>
 
 <p>Pressing the 'R' key will restart the current run.</p>
 
@@ -27,7 +27,7 @@
 
 <b>Note: when using this mode, it is best to enable lazy evaluation mode and to set the speed to 1x - 4x. The simulation speed DOES NOT affect the ASAP mode much (if at all), but gives a better visual on each frame.</b></p>
 
-<p>Pressing the 'G' key or the button "Do the rest of this generation ASAP" will complete the current generation ASAP. It will not show any following creatures in that generation and will insted process them in the background. The screen may freeze in the process, but this is normal.
+<p>Pressing the 'G' key or the button "Do the rest of this generation ASAP" will complete the current generation ASAP. It will not show any following creatures in that generation and will insted process them in the background. The screen (window) may freeze in the process, but this is normal.
 
 <b>Note: when using this mode, it is best to enable lazy evaluation.</b></p>
 

@@ -219,7 +219,7 @@ void endGeneration () {
 }
 
 void draw () {
-  if (gASAP) {
+  if (gASAP && !paused) {
     doGenASAP ();
   }
   
