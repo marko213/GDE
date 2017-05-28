@@ -3,25 +3,33 @@ class ScreenNode extends Node {
   public int type; // 0 - box; 1 - triangle; 2 - both
   public int x, y;
   
-  public ScreenNode (int x, int y, int type) {
-    super (-1);
+  public ScreenNode (int x, int y, int type, boolean unused) {
+    super (-1, unused);
     this.x = x;
     this.y = y;
     this.type = type;
   }
   
+  public ScreenNode (int x, int y, int type) {
+    this (x, y, type, false);
+  }
+  
   public ScreenNode clone () {
-    return new ScreenNode (x, y, type);
+    return new ScreenNode (x, y, type, unused);
   }
   
   @Override
   public void iterate () {
-    
-      if (type != 1 && y - (sizeY - floorLevel) + camY <= 0) {
-        lastVal = true; 
-        iterateOutputs (true);
-        return;
-      }
+    screenIterate ();
+    checkUnused ();
+  }
+  
+  void screenIterate () {
+    if (type != 1 && y - (sizeY - floorLevel) + camY <= 0) {
+      lastVal = true; 
+      iterateOutputs (true);
+      return;
+    }
     
     boolean a = false;
     

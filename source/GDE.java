@@ -18,39 +18,40 @@ public class GDE extends PApplet {
 // https://www.youtube.com/watch?v=5N7NYc7PPf8
 
 int obstacleSize = 50;     // Size of obstacle collision / drawing box (should be 50 for compat reasons)
-int playerSize = 50;       // Size of player collision / drawing box
-int boundingWidth = 4;     // Width of the border around obstacles
-int fadePrecision = 3;     // Precision to draw obstacle color fade with (1 is the smoothest)
+int playerSize = 50;         // Size of player collision / drawing box
+int boundingWidth = 4;       // Width of the border around obstacles
+int fadePrecision = 3;       // Precision to draw obstacle color fade with (1 is the smoothest)
 
-float gravity = 0.7f;      // Simulation gravity (pixels per second per 1/60 of a second)
-float termVel = 30f;       // Terminal velocity for the player (Y axis)
-float jumpVel = 14.9f;     // Jump velocity for player
-int delayTime = 60;        // Amount of frames to wait for on death / win
+float gravity = 0.7f;        // Simulation gravity (pixels per second per 1/60 of a second)
+float termVel = 30f;         // Terminal velocity for the player (Y axis)
+float jumpVel = 14.9f;       // Jump velocity for player
+int delayTime = 60;          // Amount of frames to wait for on death / win
 
-int restartTime = 0;       // Time for when to start new run
-boolean won = false;       // Has the player won (on the current run)?
-int sizeX = 800;           // Size of the play area (X axis)
-int sizeY = 750;           // Size of the window (Y axis)
-int sidebarWidth = 750;    // Width of the sidebar
+int restartTime = 0;         // Time for when to start new run
+boolean won = false;         // Has the player won (on the current run)?
+int sizeX = 800;             // Size of the play area (X axis)
+int sizeY = 750;             // Size of the window (Y axis)
+int sidebarWidth = 750;      // Width of the sidebar
 
-int playerX;               // Current position of the player (X axis)
-int playerY;               // Current position of the player (Y axis)
-int playerVelX;            // Velocity of player (X axis) (pixels/ (1/60-th of a second))
-float playerVelY;          // Velocity of player (Y axis) (pixels/ (1/60-th of a second))
-boolean paused = false;    // Is the game currently paused? 
-int endX;                  // X position that needs to be reached to win
+int playerX;                 // Current position of the player (X axis)
+int playerY;                 // Current position of the player (Y axis)
+int playerVelX;              // Velocity of player (X axis) (pixels/ (1/60-th of a second))
+float playerVelY;            // Velocity of player (Y axis) (pixels/ (1/60-th of a second))
+boolean paused = false;      // Is the game currently paused? 
+int endX;                    // X position that needs to be reached to win
 
-int camX = 0;              // Position of the camera (X axis)
-int camY = 0;              // Position of the camera (Y axis)
-int drawIndex = 0;
+int camX = 0;                // Position of the camera (X axis)
+int camY = 0;                // Position of the camera (Y axis)
+int drawIndex = 0;           // Index in obstacles to begin drawing / checking collision from 
 
-int genId = 1;             // Id of the generation (1 - ...)
+int genId = 1;               // Id of the generation (1 - ...)
 
-int floorLevel;            // Y coordinate for the floor to be drawn from
+int floorLevel;              // Y coordinate for the floor to be drawn from
 
-boolean lazyEval = true;   // Should the simulation skip already-evaluated creatures? 
-boolean gASAP = false;     // Should the generations be done ASAP?
-boolean hasWon = false;    // Has this evolution won the level?
+boolean lazyEval = true;     // Should the simulation skip already-evaluated creatures? 
+boolean gASAP = false;       // Should the generations be done ASAP?
+boolean autoRestart = false; // Should the generations be automatically restarted?
+boolean hasWon = false;      // Has this evolution won the level?
 
 Obstacle[] obstacles;
 PGraphics boxGraphics, triangleGraphics, flippedTriangleGraphics, networkBgGraphics, singleGraphics, genGraphics;
@@ -62,6 +63,10 @@ int creatureId = 0;
 int networkDrawMode = 1; // 0 - normal, draw normal nodes & connectors; 1 - extended, also draw screen nodes; 2 - hidden, only draw output
 int nodeSize = 25;
 int processSpeed = 1; // How many iterations to do for each frame
+int restartThreshold = 100; // How many inactive (no progress made in the level) generations to wait before restarting
+int inactiveGens = 0; // How many inactive generations have already happened after last progress?
+
+final int restartThresholdMin = 10, restartThresholdMax = 5000; // Minimum and maximum for the restart threshold
 
 public void keyPressed () {
   char k = Character.toLowerCase (key);
@@ -119,6 +124,21 @@ public void keyPressed () {
     
     case 'g':
       doGenASAP ();
+      break;
+    
+    case 'x':
+      if (restartThreshold > inactiveGens || autoRestart)
+        autoRestart = !autoRestart;
+      break;
+    
+    case 'c':
+      int t = max (restartThreshold - (restartThreshold <= 50 ? 10 : (50 * (int) pow (2, max (log10 ((restartThreshold - 1) / 5) - 1, 0)) * (int) pow (5, max (log10 (restartThreshold - 1) - 2, 0)))), restartThresholdMin); // Formula used to create the sequence 10; 20; 30; 40; 50; 100; 150; ...; 450; 500; 600 ...
+      if (t > inactiveGens || !autoRestart)
+        restartThreshold = t; 
+      break;
+    
+    case 'v':
+      restartThreshold = min (restartThreshold + (restartThreshold < 50 ? 10 : (50 * (int) pow (2, max (log10 (restartThreshold / 5) - 1, 0)) * (int) pow (5, max (log10 (restartThreshold) - 2, 0)))), restartThresholdMax); // Formula used to create the sequence 10; 20; 30; 40; 50; 100; 150; ...; 450; 500; 600 ...
       break;
   }
 }
@@ -198,20 +218,24 @@ public void initRun () {
   won = false;
   camX = max (playerX - sizeX / 2, 0);
   camY = max (playerY - (height - floorLevel), 0);
-  generations.get (generations.size () - 1).creatures[creatureId].iterate ();
+  generations.get (generations.size () - 1).creatures[creatureId].preRunReset ();
 }
 
 public void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
   genId ++;
+  if (autoRestart && inactiveGens > restartThreshold) {
+    restartAll ();
+    return;
+  }
   if (generations.size () > 2) {
     generations.remove (0);
   }
 }
 
 public void draw () {
-  if (gASAP) {
+  if (gASAP && !paused) {
     doGenASAP ();
   }
   
@@ -350,6 +374,12 @@ public void drawSidebar () {
   
   // The information text
   textSize (24);
+  if (inactiveGens < restartThreshold)
+    fill (180);
+  else
+    fill (180, 40, 40);
+    
+  text ("Automatic restarting " + (autoRestart? "en" : "dis") + "abled   " + inactiveGens + " inactive gen" + (inactiveGens == 1 ? "" : "s") + " out of " + restartThreshold, 10, height - 55, 900, 30);
   fill (180);
   text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + (processSpeed == 0 ? "0.5" : processSpeed) + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
@@ -436,6 +466,7 @@ public void restartAll () {
   generations.add (new Generation ());
   genId = 1;
   creatureId = 0;
+  inactiveGens = 0;
   hasWon = false;
   drawSingle (new ArrayList<Creature> ());
   records.clear ();
@@ -662,6 +693,10 @@ public int clamp (int value, int min, int max) {
   return min (max (value, min), max);
 }
 
+public int log10 (int n) {
+  return (int) (log (n) / log (10));
+}
+
 public void drawPlayer () {
   noStroke ();
   fill (0, 0, 0);
@@ -820,7 +855,14 @@ public void drawGens () {
   
   py = 280 - round (((float) records.get (0)[1]) * 260f / ((float) max));
   px = 20;
+  int pProgress = -1;
   for (int i = 0; i < records.size (); i++) {
+    if (records.get (i)[0] == pProgress)
+      inactiveGens ++;
+    else {
+      pProgress = records.get (i)[0];
+      inactiveGens = 0;
+    }
     int x = 20 + round (((float) i) * (((float) sidebarWidth) / 2f - 41f) / ((float) records.size () - 1f));
     int y = 280 - round (((float) records.get (i)[0]) * 260f / ((float) max));
     genGraphics.line (px, py, x, y);
@@ -1025,6 +1067,13 @@ class Creature {
     }
   }
   
+  public void preRunReset () {
+    for (Node n : nodes) {
+      n.preRunReset ();
+    }
+    iterate ();
+  }
+  
   public void iterate () {
     reset ();
     for (int i = -1; i < 11; i++) {
@@ -1048,7 +1097,12 @@ class Creature {
   public void nrmlRandomize () {
     fitness = 0; // Reset the fitness, marks the creature to be re-evaluated
     
-    float p = random (1);
+    float p = random (3f);
+    
+    if (p <= 0.1f) // 1 / 30 chance
+      cleanupUnusedNodes ();
+      
+    p = random (1f);
     
     int b = 6;
     
@@ -1060,7 +1114,7 @@ class Creature {
     }
     
     for (; b > 0; b--) {
-      p = random (9); // Weighted random:
+      p = random (9f); // Weighted random:
       if (p < 0.45f) { // 1/20 add a new Node
         addNode ();
       } else if (p < 0.9f) { // 1/20 add a new Node in a Connector
@@ -1084,6 +1138,23 @@ class Creature {
       }
     }
     cleanup();
+  }
+  
+  public void cleanupUnusedNodes () {
+    float p = random (0.25f, 0.75f);
+    ArrayList<Node> unused = new ArrayList<Node> ();
+    
+    for (Node n : nodes) {
+      if (n.unused && random (1f) < p)
+        unused.add (n);
+    }
+    
+    if (nodes.size () - unused.size () <= 3)
+      return;
+    
+    for (int i = unused.size () - 1; i >= 0; i --) {
+      removeNode (unused.get (i));
+    }
   }
   
   public void addNode () { // Add a random node
@@ -1157,10 +1228,12 @@ class Creature {
   }
   
   public void addNodeInConn () { // Add a random node inside a connection
+    
     if (nodes.size () > 25 && random (1) < 0.6f)
       return;
     if (connectors.size () == 0)
       return;
+    
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
       Connector c = connectors.get((int) random (connectors.size()));
       if (c.output.layer - c.input.layer > 1) { // There is room between the two nodes.
@@ -1206,6 +1279,17 @@ class Creature {
     if (i == 10)
       return;
     
+    removeNode (n);
+  }
+  
+  public void removeNode (Node n) {
+    int index = nodes.indexOf (n);
+    
+    if (index == -1) {
+      println ("Attempt to remove a non-existant node!");
+      return;
+    }
+    
     ArrayList<Connector> c = new ArrayList<Connector> ();
     
     for (Connector co : connectors) { // List the Connectors connected to this node
@@ -1218,9 +1302,9 @@ class Creature {
       for (Connector co : n.o) // Remove all Connectors coming from this Node from the list of Connectors
         connectors.remove (connectors.indexOf (co));
       
-      nodes.remove(nodes.indexOf (n)); // Remove the Node from the list of all Nodes
+      nodes.remove(index); // Remove the Node from the list of all Nodes
       
-    } else if (c.size () == 1) { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
+    } else { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
       
       Connector conn = c.get ((int) random (c.size ())); // The chosen Connector
       
@@ -1236,9 +1320,10 @@ class Creature {
         co.input.o.remove (co.input.o.indexOf (co));
       }
       
-      nodes.remove(nodes.indexOf (n)); // Remove the removed Node from the list of all Nodes
+      nodes.remove(index); // Remove the removed Node from the list of all Nodes
     }
   }
+  
   
   public void changeNodeLayer () {
     Node n = null;
@@ -1702,19 +1787,27 @@ class Generation {
 
 class Node {
   public boolean in1, in2;
-  public boolean lastVal;
+  public boolean lastVal, unused;
   public ArrayList<Connector> o;
   public int layer;
   public int yOffset;
   
-  public Node (int layer) {
+  boolean baseSet;
+  boolean checkVal;
+  
+  public Node (int layer, boolean unused) {
     reset ();
     this.layer = layer;
+    this.unused = unused;
     o = new ArrayList<Connector> ();
   }
   
+  public Node (int layer) {
+    this (layer, false);
+  }
+  
   public Node clone () {
-    return new Node (layer);
+    return new Node (layer, unused);
   }
   
   public void iterate () {
@@ -1726,6 +1819,20 @@ class Node {
         iterateOutputs (lastVal);
       }
     }
+    
+    checkUnused ();
+  }
+  
+  public void checkUnused () {
+    if (!unused)
+      return;
+    
+    if (baseSet && (checkVal ^ lastVal)) {
+      unused = false;
+    } else if (!baseSet) {
+      baseSet = true;
+      checkVal = lastVal;
+    }
   }
   
   public void iterateOutputs (boolean value) {
@@ -1736,6 +1843,12 @@ class Node {
   
   public void reset () {
     in1 = in2 = lastVal = false;
+  }
+  
+  public void preRunReset () {
+    baseSet = false;
+    if (layer != 10)
+      unused = true;
   }
   
   public void draw () {
@@ -1837,25 +1950,33 @@ class ScreenNode extends Node {
   public int type; // 0 - box; 1 - triangle; 2 - both
   public int x, y;
   
-  public ScreenNode (int x, int y, int type) {
-    super (-1);
+  public ScreenNode (int x, int y, int type, boolean unused) {
+    super (-1, unused);
     this.x = x;
     this.y = y;
     this.type = type;
   }
   
+  public ScreenNode (int x, int y, int type) {
+    this (x, y, type, false);
+  }
+  
   public ScreenNode clone () {
-    return new ScreenNode (x, y, type);
+    return new ScreenNode (x, y, type, unused);
   }
   
   @Override
   public void iterate () {
-    
-      if (type != 1 && y - (sizeY - floorLevel) + camY <= 0) {
-        lastVal = true; 
-        iterateOutputs (true);
-        return;
-      }
+    screenIterate ();
+    checkUnused ();
+  }
+  
+  public void screenIterate () {
+    if (type != 1 && y - (sizeY - floorLevel) + camY <= 0) {
+      lastVal = true; 
+      iterateOutputs (true);
+      return;
+    }
     
     boolean a = false;
     
