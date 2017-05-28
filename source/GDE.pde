@@ -209,7 +209,7 @@ void endGeneration () {
   generations.add (new Generation (generations.get (generations.size () - 1).creatures));
   generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
   genId ++;
-  if (autoRestart && inactiveGens > restartThreshold) {
+  if (autoRestart && inactiveGens > restartThreshold && !hasWon) {
     restartAll ();
     return;
   }
@@ -358,12 +358,16 @@ void drawSidebar () {
   
   // The information text
   textSize (24);
-  if (inactiveGens < restartThreshold)
-    fill (180);
-  else
-    fill (180, 40, 40);
-    
-  text ("Automatic restarting " + (autoRestart? "en" : "dis") + "abled   " + inactiveGens + " inactive gen" + (inactiveGens == 1 ? "" : "s") + " out of " + restartThreshold, 10, height - 55, 900, 30);
+  
+  if (!hasWon) {
+    if (inactiveGens < restartThreshold)
+      fill (180);
+    else
+      fill (180, 40, 40);
+      
+    text ("Automatic restarting " + (autoRestart? "en" : "dis") + "abled   " + inactiveGens + " inactive gen" + (inactiveGens == 1 ? "" : "s") + " out of " + restartThreshold, 10, height - 55, 900, 30);
+  }
+  
   fill (180);
   text ("Gen " + genId + "   creature " + (creatureId + 1) + "   " + (processSpeed == 0 ? "0.5" : processSpeed) + "x speed   lazy evaluation " + (lazyEval? "en" : "dis") + "abled" + (hasWon? "   win" : ""), 10, height - 30, 900, 30);
 }
