@@ -202,7 +202,7 @@ void initRun () {
   won = false;
   camX = max (playerX - sizeX / 2, 0);
   camY = max (playerY - (height - floorLevel), 0);
-  generations.get (generations.size () - 1).creatures[creatureId].iterate ();
+  generations.get (generations.size () - 1).creatures[creatureId].preRunReset ();
 }
 
 void endGeneration () {

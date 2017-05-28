@@ -1,18 +1,26 @@
 class Node {
   public boolean in1, in2;
-  public boolean lastVal;
+  public boolean lastVal, unused;
   public ArrayList<Connector> o;
   public int layer;
   public int yOffset;
   
-  public Node (int layer) {
+  boolean baseSet;
+  boolean checkVal;
+  
+  public Node (int layer, boolean unused) {
     reset ();
     this.layer = layer;
+    this.unused = unused;
     o = new ArrayList<Connector> ();
   }
   
+  public Node (int layer) {
+    this (layer, false);
+  }
+  
   public Node clone () {
-    return new Node (layer);
+    return new Node (layer, unused);
   }
   
   public void iterate () {
@@ -24,6 +32,20 @@ class Node {
         iterateOutputs (lastVal);
       }
     }
+    
+    checkUnused ();
+  }
+  
+  void checkUnused () {
+    if (!unused)
+      return;
+    
+    if (baseSet && (checkVal ^ lastVal)) {
+      unused = false;
+    } else if (!baseSet) {
+      baseSet = true;
+      checkVal = lastVal;
+    }
   }
   
   void iterateOutputs (boolean value) {
@@ -34,6 +56,12 @@ class Node {
   
   public void reset () {
     in1 = in2 = lastVal = false;
+  }
+  
+  public void preRunReset () {
+    baseSet = false;
+    if (layer != 10)
+      unused = true;
   }
   
   public void draw () {

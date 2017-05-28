@@ -31,9 +31,19 @@
 
 <b>Note: when using this mode, it is best to enable lazy evaluation.</b></p>
 
+<p>Pressing the 'X' key will enable automatic restarting when the threshold of inactive generations has been reached.</p>
+
+<b>Note: automatic restarts can't be enabled if it should already restart based on the current amount of inactive generations. This is also indicated by the red text.</b>
+
+<p>Pressing the 'C' and 'V' keys will allow you to change the threshold of inactive generations before a restart.</p>
+
+<b>Note: when automatic restarts are enabled, the threshold can't be changed to be below (or equal to) the current amount of inactive generations.</b>
+
 <br></br>
 <p>Here are some definitions for the things stated above:</p>
 
 <p><b><i>Network draw modes</i></b> control how much of the network is drawn onto the screen. There are three settings: <i>draw all</i>, which draws the entire network, <i>draw normal nodes</i>, which draws everything apart from the screen nodes and <i>output only</i>, which only draws the output node.</p>
 
 <p><b><i>Simulation speed</i></b> is the speed at which creatures are evaluated. This is done by doing more iterations per frame and reducing the "dead" time. This speed ranges from 0.5x (1 iteration per frame (30 fps); normal dead time) to 512x (up to 512 iterations per frame (60 fps); 512 times shorter "dead" time (almost instant)).</p>
+
+<p>An <b><i>inactive generation</i></b> is a generation in which the best creature of the generation performed as well as the best creature of the previous generation. Multiple consecutive inactive generations can activate a restart, if automatic restarting is enabled.</p>

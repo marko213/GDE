@@ -107,6 +107,13 @@ class Creature {
     }
   }
   
+  public void preRunReset () {
+    for (Node n : nodes) {
+      n.preRunReset ();
+    }
+    iterate ();
+  }
+  
   public void iterate () {
     reset ();
     for (int i = -1; i < 11; i++) {
@@ -130,7 +137,12 @@ class Creature {
   public void nrmlRandomize () {
     fitness = 0; // Reset the fitness, marks the creature to be re-evaluated
     
-    float p = random (1);
+    float p = random (3f);
+    
+    if (p <= 0.1f) // 1 / 30 chance
+      cleanupUnusedNodes ();
+      
+    p = random (1f);
     
     int b = 6;
     
@@ -142,7 +154,7 @@ class Creature {
     }
     
     for (; b > 0; b--) {
-      p = random (9); // Weighted random:
+      p = random (9f); // Weighted random:
       if (p < 0.45f) { // 1/20 add a new Node
         addNode ();
       } else if (p < 0.9f) { // 1/20 add a new Node in a Connector
@@ -166,6 +178,23 @@ class Creature {
       }
     }
     cleanup();
+  }
+  
+  void cleanupUnusedNodes () {
+    float p = random (0.25f, 0.75f);
+    ArrayList<Node> unused = new ArrayList<Node> ();
+    
+    for (Node n : nodes) {
+      if (n.unused && random (1f) < p)
+        unused.add (n);
+    }
+    
+    if (nodes.size () - unused.size () <= 3)
+      return;
+    
+    for (int i = unused.size () - 1; i >= 0; i --) {
+      removeNode (unused.get (i));
+    }
   }
   
   void addNode () { // Add a random node
@@ -239,10 +268,12 @@ class Creature {
   }
   
   void addNodeInConn () { // Add a random node inside a connection
+    
     if (nodes.size () > 25 && random (1) < 0.6f)
       return;
     if (connectors.size () == 0)
       return;
+    
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
       Connector c = connectors.get((int) random (connectors.size()));
       if (c.output.layer - c.input.layer > 1) { // There is room between the two nodes.
@@ -288,6 +319,17 @@ class Creature {
     if (i == 10)
       return;
     
+    removeNode (n);
+  }
+  
+  void removeNode (Node n) {
+    int index = nodes.indexOf (n);
+    
+    if (index == -1) {
+      println ("Attempt to remove a non-existant node!");
+      return;
+    }
+    
     ArrayList<Connector> c = new ArrayList<Connector> ();
     
     for (Connector co : connectors) { // List the Connectors connected to this node
@@ -300,9 +342,9 @@ class Creature {
       for (Connector co : n.o) // Remove all Connectors coming from this Node from the list of Connectors
         connectors.remove (connectors.indexOf (co));
       
-      nodes.remove(nodes.indexOf (n)); // Remove the Node from the list of all Nodes
+      nodes.remove(index); // Remove the Node from the list of all Nodes
       
-    } else if (c.size () == 1) { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
+    } else { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
       
       Connector conn = c.get ((int) random (c.size ())); // The chosen Connector
       
@@ -318,9 +360,10 @@ class Creature {
         co.input.o.remove (co.input.o.indexOf (co));
       }
       
-      nodes.remove(nodes.indexOf (n)); // Remove the removed Node from the list of all Nodes
+      nodes.remove(index); // Remove the removed Node from the list of all Nodes
     }
   }
+  
   
   void changeNodeLayer () {
     Node n = null;
