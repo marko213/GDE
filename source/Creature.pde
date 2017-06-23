@@ -666,7 +666,7 @@ class Creature {
   }
   
   public void printDebugOutput () {
-    println ("Begin debug output" + (creatureId == 200 ? "" : (" for generation id " + (generations.size () - 1) + " creature id " + creatureId + ":")));
+    println ("Begin debug output" + (creatureId == 200 ? "" : (" for generation id " + genId + " creature id " + creatureId + ":")));
       
       println ("Nodes:");
       for (Node n : nodes) {

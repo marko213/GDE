@@ -56,7 +56,7 @@ boolean hasWon = false;      // Has this evolution won the level?
 Obstacle[] obstacles;
 PGraphics boxGraphics, triangleGraphics, flippedTriangleGraphics, networkBgGraphics, singleGraphics, genGraphics;
 
-ArrayList<Generation> generations = new ArrayList<Generation> (); // ArrayList to hold generations (deprecated as of Alpha 0.3.1 ?)
+Generation currentGen;       // Reference to current generation
 ArrayList<int[]> records = new ArrayList<int[]> ();
 
 int creatureId = 0;
@@ -111,7 +111,7 @@ public void keyPressed () {
       break;
       
     case 'o':
-      generations.get (generations.size () - 1).creatures[creatureId].printDebugOutput (); // Output printed to java standard output, can be seen via command prompt / terminal etc.
+      currentGen.creatures[creatureId].printDebugOutput (); // Output printed to java standard output, can be seen via command prompt / terminal etc.
       break;
       
     case 'e':
@@ -218,19 +218,15 @@ public void initRun () {
   won = false;
   camX = max (playerX - sizeX / 2, 0);
   camY = max (playerY - (height - floorLevel), 0);
-  generations.get (generations.size () - 1).creatures[creatureId].preRunReset ();
+  currentGen.creatures[creatureId].preRunReset ();
 }
 
 public void endGeneration () {
-  generations.add (new Generation (generations.get (generations.size () - 1).creatures));
-  generations.get (generations.size () - 1).sortCreaturesAndCreateNew ();
+  currentGen.sortCreaturesAndCreateNew ();
   genId ++;
   if (autoRestart && inactiveGens > restartThreshold && !hasWon) {
     restartAll ();
     return;
-  }
-  if (generations.size () > 2) {
-    generations.remove (0);
   }
 }
 
@@ -297,14 +293,14 @@ public void draw () {
     
     if (restartTime == 0) {
 
-      generations.get (generations.size () - 1).creatures[creatureId].fitness = playerX;
+      currentGen.creatures[creatureId].fitness = playerX;
       
       /*
         if (creatureId < Generation.creaturesPerGen - 1) {
       */
       do {
         creatureId ++;
-      } while (lazyEval && creatureId < Generation.creaturesPerGen && generations.get (generations.size () - 1).creatures[creatureId].fitness != 0);
+      } while (lazyEval && creatureId < Generation.creaturesPerGen && currentGen.creatures[creatureId].fitness != 0);
       
       if (creatureId > Generation.creaturesPerGen - 1) {
         endGeneration ();
@@ -367,7 +363,7 @@ public void drawSidebar () {
   // Background for network map
   image (networkBgGraphics, sizeX + 1, 100);
   // Draw network
-  generations.get (generations.size () - 1).creatures[creatureId].draw ();
+  currentGen.creatures[creatureId].draw ();
   
   image (singleGraphics, sizeX + 1, 449);
   image (genGraphics, sizeX + sidebarWidth / 2 + 1, 449);
@@ -389,7 +385,7 @@ public void drawSidebar () {
 }
 
 public void iterate () {
-  generations.get (generations.size () - 1).creatures[creatureId].iterate ();
+  currentGen.creatures[creatureId].iterate ();
   playerX += playerVelX;
   playerY += playerVelY;
   
@@ -397,7 +393,7 @@ public void iterate () {
   
   if (checkOnSomething ()) {
     //if (mousePressed){ // Manual mode
-    if (generations.get (generations.size () - 1).creatures[creatureId].outputNode.lastVal) {
+    if (currentGen.creatures[creatureId].outputNode.lastVal) {
       playerVelY = jumpVel;
     } else {
       playerVelY = 0f;
@@ -416,11 +412,11 @@ public void iterate () {
 
 public void doGenASAP () {
   if (restartTime > 0) {
-    generations.get (generations.size () - 1).creatures[creatureId].fitness = playerX;
+    currentGen.creatures[creatureId].fitness = playerX;
     if (creatureId < Generation.creaturesPerGen - 1) {
       do {
         creatureId ++;
-      } while (lazyEval && generations.get (generations.size () - 1).creatures[creatureId].fitness != 0 && creatureId < Generation.creaturesPerGen - 1);
+      } while (lazyEval && currentGen.creatures[creatureId].fitness != 0 && creatureId < Generation.creaturesPerGen - 1);
       initRun ();
     }
   }
@@ -441,10 +437,10 @@ public void doGenASAP () {
       return;
     }
     
-    generations.get (generations.size () - 1).creatures[creatureId].fitness = playerX;
+    currentGen.creatures[creatureId].fitness = playerX;
     do {
       creatureId ++;
-    } while (lazyEval && creatureId <= Generation.creaturesPerGen - 1 && generations.get (generations.size () - 1).creatures[creatureId].fitness != 0);
+    } while (lazyEval && creatureId <= Generation.creaturesPerGen - 1 && currentGen.creatures[creatureId].fitness != 0);
     
     if (creatureId <= Generation.creaturesPerGen - 1) {
       initRun();
@@ -466,8 +462,7 @@ public void mouseClicked () {
 }
 
 public void restartAll () {
-  generations.clear ();
-  generations.add (new Generation ());
+  currentGen = new Generation ();
   genId = 1;
   creatureId = 0;
   inactiveGens = 0;
@@ -1630,7 +1625,7 @@ class Creature {
   }
   
   public void printDebugOutput () {
-    println ("Begin debug output" + (creatureId == 200 ? "" : (" for generation id " + (generations.size () - 1) + " creature id " + creatureId + ":")));
+    println ("Begin debug output" + (creatureId == 200 ? "" : (" for generation id " + genId + " creature id " + creatureId + ":")));
       
       println ("Nodes:");
       for (Node n : nodes) {
