@@ -601,7 +601,7 @@ void checkColl () {
         return;
     } else { // Player (probably) approached from the Y axis
       int sgn = (gravity < 0)? -1 : 1;
-      if (! (playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1)) { // Player collided on the incorrect side
+      if (!(playerY - o.y > 0 && sgn == 1 || playerY - o.y < 0 && sgn == -1)) { // Player collided on the incorrect side
         kill ();
         return;
       }

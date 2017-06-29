@@ -24,7 +24,7 @@ class Creature {
     Creature cr = new Creature (); // Return creature creation
     cr.nodes.clear (); // Clear the list of nodes (remove the automatic output Node)
     cr.nodes.ensureCapacity (nodes.size ()); // Size safety, maybe preventing crashes?
-    cr.connectors.ensureCapacity (connectors.size ()); // --, , --
+    cr.connectors.ensureCapacity (connectors.size ()); // --,,--
     cr.fitness = fitness; // Clone the fitness for skipping
     
     ArrayList<Node> dl = new ArrayList<Node> (nodes.size ()); // List of nodes already copied (local). Matching cloned nodes will be stored in cr.nodes
@@ -247,7 +247,7 @@ class Creature {
       o = sel.get ((int) random (sel.size ()));
     } while (o.layer == 0); // Generate a new node if the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
     
-    if (! (no instanceof ScreenNode)) {
+    if (!(no instanceof ScreenNode)) {
       no.layer = (int) random (o.layer); // Set the layer for the new node
       int i = 0;
       for (Node n : nodes) {
