@@ -207,16 +207,14 @@ public void setup (){
 
 public void initRun () {
   drawIndex = 0;
-  playerX = 40;
+  playerX = playerSize / 2;
   playerY = 0;
   playerVelY = 0f;
   playerVelX = 5;
-  camX = 0;
-  camY = 0;
   gravity = abs (gravity);
   restartTime = 0;
   won = false;
-  camX = max (playerX - sizeX / 2, 0);
+  camX = playerX - sizeX / 2;
   camY = max (playerY - (height - floorLevel), 0);
   currentGen.creatures[creatureId].preRunReset ();
 }
@@ -239,15 +237,13 @@ public void draw () {
   if (restartTime == 0 && !paused) {
     for (int i = 0; i < max (processSpeed, 1); i++) {
       iterate ();
-      camX = max (playerX - sizeX / 2, 0);
+      camX = playerX - sizeX / 2;
       camY = max (playerY - (height - floorLevel), 0);
       
       if (restartTime > 0)
         break;
     }
   }
-  
-
   
   pushMatrix ();
   translate (-camX, camY);
@@ -258,7 +254,7 @@ public void draw () {
   
   boolean a = false;
   
-  for(int i = (paused ? 0 : drawIndex); i < obstacles.length; i ++) { 
+  for(int i = drawIndex; i < obstacles.length; i ++) { 
     
     Obstacle o = obstacles[i];
     
@@ -272,23 +268,40 @@ public void draw () {
   }
   
   noStroke ();
-  fill (70, 70, 60);
+  fill (70, 200 , 70);
+  rect (-sizeX / 2, 0, sizeX / 2, floorLevel);
+  
+  fill (200, 10, 10);
+  rect (endX + playerSize / 2, 0, sizeX / 2, floorLevel);
+  
+  fill (70);
   rect (camX, floorLevel, sizeX, height - floorLevel);
+  
+  stroke (55);
+  strokeWeight (4);
+  noSmooth ();
+  line (camX, floorLevel + 2, camX + sizeX, floorLevel + 2);
   
   popMatrix ();
   
+  smooth ();
+  
   if (restartTime > 0) {
+    fill (60);
     textSize (40);
-    fill (0);
-    text (won ? "Win" : "Dead", sizeX / 2 - 60, height / 2 - 30, 100, 50);
+    String t = won ? "Win" : "Dead";
+    text (t, (sizeX - textWidth (t)) / 2, height / 2 - 80, 100, 50);
     
     if (won && !hasWon) {
       paused = true;
       hasWon = true;
+      restartTime = 0;
+      
+      initRun ();
     }
     
     if (!paused) {
-      restartTime = max (restartTime - processSpeed, 0);
+      restartTime = max (restartTime - max (processSpeed, 1), 0);
     }
     
     if (restartTime == 0) {
@@ -310,6 +323,13 @@ public void draw () {
       initRun ();
     }
   }
+  
+  if (paused) {
+    fill (100);
+    textSize (24);
+    text ("Paused", (sizeX - textWidth("Paused")) / 2, height / 2 - 35, 120, 70);
+  }
+  
   drawSidebar ();
 }
 
@@ -880,6 +900,7 @@ public void drawGens () {
 public void loadLevel (File f) {
   if (!f.exists ()) { // Failsafe
     obstacles = new Obstacle[0];
+    endX = 300;
   } else {
     try {
       Table table = loadTable (f.getCanonicalPath (), "header, csv"); // Gets stuck somewhere if loaded file isn't an expected table. Refer to GDE level editor/README.md on GitHub for some solutions
