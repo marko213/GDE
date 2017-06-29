@@ -254,14 +254,14 @@ public void draw () {
   
   boolean a = false;
   
-  for(int i = drawIndex; i < obstacles.length; i ++) { 
+  for (int i = drawIndex; i < obstacles.length; i ++) { 
     
     Obstacle o = obstacles[i];
     
-    if(betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+    if (betweenIn (o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
       a = true;
-      if (betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
-        o.draw();
+      if (betweenIn (o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        o.draw ();
     } else if (a) {
       break;
     }
@@ -327,7 +327,7 @@ public void draw () {
   if (paused) {
     fill (100);
     textSize (24);
-    text ("Paused", (sizeX - textWidth("Paused")) / 2, height / 2 - 35, 120, 70);
+    text ("Paused", (sizeX - textWidth ("Paused")) / 2, height / 2 - 35, 120, 70);
   }
   
   drawSidebar ();
@@ -463,12 +463,12 @@ public void doGenASAP () {
     } while (lazyEval && creatureId <= Generation.creaturesPerGen - 1 && currentGen.creatures[creatureId].fitness != 0);
     
     if (creatureId <= Generation.creaturesPerGen - 1) {
-      initRun();
+      initRun ();
     }
   }
   endGeneration ();
   creatureId = 0;
-  initRun();
+  initRun ();
 }
 
 public void mouseClicked () {
@@ -552,12 +552,12 @@ public void checkColl () {
   for (int i = drawIndex; i < obstacles.length; i ++) {
     Obstacle o = obstacles[i];
     
-    if (betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+    if (betweenIn (o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
       if (!a) {
         a = true;
         drawIndex = i;
       }
-      if (!betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+      if (!betweenIn (o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
         continue;
     } else {
       if (a)
@@ -599,7 +599,7 @@ public void checkColl () {
       */
       
       if (prevY >= o.y + obstacleSize / 2 + playerSize / 2 && o.y + obstacleSize / 2 + playerSize / 2 > tempY) { // Only raise the player if the player was above the box and the current raise is below that of the obstacle
-        if (betweenIn(playerVelX * (abs (max(prevY, o.y) - min(prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
+        if (betweenIn (playerVelX * (abs (max (prevY, o.y) - min (prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
           tempY = o.y + obstacleSize / 2 + playerSize / 2; // Raise the player
         }
       }
@@ -623,7 +623,7 @@ public void checkColl () {
       }
     }*/
     
-    if (betweenIn(playerY - (playerY - prevY) * (abs (max(o.x, prevX) - min(o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
+    if (betweenIn (playerY - (playerY - prevY) * (abs (max (o.x, prevX) - min (o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
       kill ();
       return;
     }
@@ -774,7 +774,7 @@ public void drawSingle (ArrayList<Creature> creatures) {
   }
   
   for (float i = 20f + 0.05f * ((float) (sidebarWidth / 2 - 42)); i < sidebarWidth / 2 - 22; i += 0.05f * ((float) (sidebarWidth / 2 - 42))) {
-    if (round (i * 10) == round((0.5f * ((float) (sidebarWidth / 2 - 42)) + 20f) * 10)) {
+    if (round (i * 10) == round ((0.5f * ((float) (sidebarWidth / 2 - 42)) + 20f) * 10)) {
       singleGraphics.stroke (100);
       singleGraphics.line (round (i), 20, round (i), 280);
       singleGraphics.stroke (200);
@@ -790,7 +790,7 @@ public void drawSingle (ArrayList<Creature> creatures) {
   /*int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
   
   for (int i = 20; i < sidebarWidth / 2 - 21; i ++) {
-    int k = 280 - round (2.6f * (((float) creatures.get (round ((((float) i) - 20f) / ((float) (sidebarWidth / 2 - 21)) * ((float)(creatures.size () - 1)))).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+    int k = 280 - round (2.6f * (((float) creatures.get (round ((((float) i) - 20f) / ((float) (sidebarWidth / 2 - 21)) * ((float) (creatures.size () - 1)))).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
     
     if (k > 280) {
       singleGraphics.line (i, j, i, 280);
@@ -807,10 +807,10 @@ public void drawSingle (ArrayList<Creature> creatures) {
   int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
   int px = 20;
   
-  for(int i = 0; i < creatures.size (); i ++) {
+  for (int i = 0; i < creatures.size (); i ++) {
     int k = 280 - round (2.6f * (((float) creatures.get (i).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
     
-    int x = round((((float) i) / ((float) (creatures.size () - 1)) * ((float)(sidebarWidth / 2 - 41)))) + 20;
+    int x = round ((((float) i) / ((float) (creatures.size () - 1)) * ((float) (sidebarWidth / 2 - 41)))) + 20;
     if (k > 280) {
       singleGraphics.line (px, j, x, 280);
       break;
@@ -846,7 +846,7 @@ public void drawGens () {
   int density = (max * 100 / endX > 25 ? (max * 100 / endX > 50 ? 4 : 2) : 1);
   
   for (int i = density; i <= max * 100 / endX; i += density) {
-    int h = 280 - ceil (((float) i) * 260f / ((float)(max * 100 / endX)));
+    int h = 280 - ceil (((float) i) * 260f / ((float) (max * 100 / endX)));
     genGraphics.line (20, h, sidebarWidth / 2 - 21, h);
     
     genGraphics.text (i + "%", 0, h + 4);
@@ -1004,7 +1004,7 @@ class Creature {
     Creature cr = new Creature (); // Return creature creation
     cr.nodes.clear (); // Clear the list of nodes (remove the automatic output Node)
     cr.nodes.ensureCapacity (nodes.size ()); // Size safety, maybe preventing crashes?
-    cr.connectors.ensureCapacity (connectors.size ()); // --,,--
+    cr.connectors.ensureCapacity (connectors.size ()); // --, , --
     cr.fitness = fitness; // Clone the fitness for skipping
     
     ArrayList<Node> dl = new ArrayList<Node> (nodes.size ()); // List of nodes already copied (local). Matching cloned nodes will be stored in cr.nodes
@@ -1157,7 +1157,7 @@ class Creature {
         removeConnector ();
       }
     }
-    cleanup();
+    cleanup ();
   }
   
   public void cleanupUnusedNodes () {
@@ -1218,16 +1218,16 @@ class Creature {
       }
       
       if (a) {
-        sel.add(n);
+        sel.add (n);
       }
-      sel.add(n);
+      sel.add (n);
     }
     
     do {
       o = sel.get ((int) random (sel.size ()));
     } while (o.layer == 0); // Generate a new node if the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
     
-    if (!(no instanceof ScreenNode)) {
+    if (! (no instanceof ScreenNode)) {
       no.layer = (int) random (o.layer); // Set the layer for the new node
       int i = 0;
       for (Node n : nodes) {
@@ -1255,7 +1255,7 @@ class Creature {
       return;
     
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
-      Connector c = connectors.get((int) random (connectors.size()));
+      Connector c = connectors.get ((int) random (connectors.size ()));
       if (c.output.layer - c.input.layer > 1) { // There is room between the two nodes.
         Node n = new Node ((int) random (c.input.layer + 1, c.output.layer)); // Create a new Node between the two other Nodes.
         nodes.add (n);
@@ -1322,7 +1322,7 @@ class Creature {
       for (Connector co : n.o) // Remove all Connectors coming from this Node from the list of Connectors
         connectors.remove (connectors.indexOf (co));
       
-      nodes.remove(index); // Remove the Node from the list of all Nodes
+      nodes.remove (index); // Remove the Node from the list of all Nodes
       
     } else { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
       
@@ -1340,7 +1340,7 @@ class Creature {
         co.input.o.remove (co.input.o.indexOf (co));
       }
       
-      nodes.remove(index); // Remove the removed Node from the list of all Nodes
+      nodes.remove (index); // Remove the removed Node from the list of all Nodes
     }
   }
   
@@ -1443,9 +1443,9 @@ class Creature {
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
     if (sn.type == 2)
-      sn.type = (int) random(2);
+      sn.type = (int) random (2);
     else
-      sn.type = (random(3) < 2f)? 1 - sn.type : 2;
+      sn.type = (random (3) < 2f)? 1 - sn.type : 2;
   }
   
   public void changeConnectorType () {
@@ -1496,7 +1496,7 @@ class Creature {
     }
   }
   
-  public void removeConnector() {
+  public void removeConnector () {
     if (connectors.size () == 0)
       return;
     Connector c = connectors.get ((int) random (connectors.size ()));
@@ -1535,7 +1535,7 @@ class Creature {
               b = (int) random (nodes.size ());
             } while (nodes.get (b).layer == 10);
             
-            Connector co = new Connector(n, random (1) < 0.5f);
+            Connector co = new Connector (n, random (1) < 0.5f);
             co.input = nodes.get (b);
             co.outputOne = random (1) < 0.5f;
             nodes.get (b).o.add (co);
@@ -1550,7 +1550,7 @@ class Creature {
           c = true;
           boolean a = true;
           while (a) {
-            Node b = nodes.get((int) random (nodes.size ()));
+            Node b = nodes.get ((int) random (nodes.size ()));
             if (b.layer > n.layer) {
               a = false;
               Connector co = new Connector (b, random (1) < 0.5f);
@@ -1565,27 +1565,27 @@ class Creature {
             Connector co = n.o.get (i);
             if (co == null || co.output == null) {
               c = true;
-              n.o.remove(i);
+              n.o.remove (i);
             } else if (co.input != n) { // Connector isn't referencing itself back to the Node (or is referencing to another Node, which is much worse). Also, this shouldn't happen.
               c = true;
               int a = 0;
               for (Node no : nodes) { // Count the references just to be sure.
-                if (no.o.indexOf(co) != -1) // Connector is marked in the output list of the node
+                if (no.o.indexOf (co) != -1) // Connector is marked in the output list of the node
                   a++;
               }
               
               if (a == 0) { // Ughhhhhh - There should be at least one reference (the current iterating Node n)
-                println("Warning: code not working properly in dereferenced connectors (0 references to a detected faulty connector). Deleting connector.");
+                println ("Warning: code not working properly in dereferenced connectors (0 references to a detected faulty connector). Deleting connector.");
                 if (connectors.indexOf (co) != -1) { // Can't trust this connector any more - maybe it was deleted??
                   connectors.remove (connectors.indexOf (co)); // Remove the Connecor
                 }
               } else if (a == 1) { // Ok, there is just a random dereference. We can work around it here
-                println("Warning: connector / node dereference: connector does not reference the only node that has it as its output. Fixing.");
+                println ("Warning: connector / node dereference: connector does not reference the only node that has it as its output. Fixing.");
                 co.input = n; // Fix the reference
               } else { // More than one reference?? Let's just delete the connector and let the cleanup figure this out
-                println("Warning: connector / node dereference: connector referenced by " + a + " nodes (forgot to remove output reference from Node?). Deleting connector.");
+                println ("Warning: connector / node dereference: connector referenced by " + a + " nodes (forgot to remove output reference from Node?). Deleting connector.");
                 for (Node no : nodes) {
-                  if (no.o.indexOf(co) != -1) // Connector is marked in the output list of the node
+                  if (no.o.indexOf (co) != -1) // Connector is marked in the output list of the node
                     no.o.remove (no.o.indexOf (co)); // Remove the connector from the list
                 }
                 
@@ -1602,7 +1602,7 @@ class Creature {
         Connector co = connectors.get (i);
         if (co == null || co.output == null || co.input == null) { // Invalid Connector (after main Node / Connector fixing)
           c = true;
-          connectors.remove(i);
+          connectors.remove (i);
         } else if (co.input.layer >= co.output.layer) {
           println ("Warning: invalid connector: connector not following feed-forward. Deleting connector...");
           throw new NullPointerException ();
@@ -1610,7 +1610,7 @@ class Creature {
         } else {
           boolean a = true;
           for (Node n : nodes) { // See if this Connector is referenced
-            if (n.o.indexOf(co) != -1) {
+            if (n.o.indexOf (co) != -1) {
               a = false;
               break;
             }
@@ -1618,8 +1618,8 @@ class Creature {
           
           if (a) { // Connector isn't referenced by any Nodes, yet it has a valid input Node. Connect the two, I guess?
             c = true;
-            println("Warning: connector / node dereference: valid connector not referenced by any nodes. Fixing.");
-            co.input.o.add(co);
+            println ("Warning: connector / node dereference: valid connector not referenced by any nodes. Fixing.");
+            co.input.o.add (co);
           }
         }
       }
@@ -1630,7 +1630,7 @@ class Creature {
       printDebugOutput ();
     }
     
-    calculateNodeOffsets();
+    calculateNodeOffsets ();
   }
   
   public void calculateNodeOffsets () {
@@ -1650,7 +1650,7 @@ class Creature {
       
       println ("Nodes:");
       for (Node n : nodes) {
-        print (nodes.indexOf(n) + " ");
+        print (nodes.indexOf (n) + " ");
         if (n instanceof ScreenNode) {
           println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + ((ScreenNode) n).type + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
         } else {
@@ -1737,7 +1737,7 @@ class Generation {
     
     // Randomize the list
     ArrayList<Creature> n = new ArrayList<Creature> (200);
-    while (!c.isEmpty()) {
+    while (!c.isEmpty ()) {
       int a = (int) random (c.size ());
       n.add (c.get (a));
       c.remove (a);
@@ -1757,7 +1757,7 @@ class Generation {
     
     // Killing code heavily inspired by evolutionMath2 by carykh
     for (int i = 0; i < creaturesPerGen / 2; i++) { // Kill half of the creatures (more slower ones, but not necessarily just slower ones)
-      if (PApplet.parseFloat(i) / creaturesPerGen <= (pow (random (-1, 1), 3) + 1) / 2) // Kill a slower creature
+      if (PApplet.parseFloat (i) / creaturesPerGen <= (pow (random (-1, 1), 3) + 1) / 2) // Kill a slower creature
         cr.add (n.get (i));
       else // Kill a faster creature
         cr.add (n.get (creaturesPerGen - i - 1));
@@ -2004,7 +2004,7 @@ class ScreenNode extends Node {
       
       Obstacle ob = obstacles[i];
       
-      if (betweenIn(ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      if (betweenIn (ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
         a = true;
         
         if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
@@ -2043,7 +2043,7 @@ class ScreenNode extends Node {
         break;
         
       case 2: // Both detector & last value false
-        fill (0, 100,0);
+        fill (0, 100, 0);
         break;
       
       case 5: // Both detector & last value true

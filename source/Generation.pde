@@ -28,7 +28,7 @@ class Generation {
     
     // Randomize the list
     ArrayList<Creature> n = new ArrayList<Creature> (200);
-    while (!c.isEmpty()) {
+    while (!c.isEmpty ()) {
       int a = (int) random (c.size ());
       n.add (c.get (a));
       c.remove (a);
@@ -48,7 +48,7 @@ class Generation {
     
     // Killing code heavily inspired by evolutionMath2 by carykh
     for (int i = 0; i < creaturesPerGen / 2; i++) { // Kill half of the creatures (more slower ones, but not necessarily just slower ones)
-      if (float(i) / creaturesPerGen <= (pow (random (-1, 1), 3) + 1) / 2) // Kill a slower creature
+      if (float (i) / creaturesPerGen <= (pow (random (-1, 1), 3) + 1) / 2) // Kill a slower creature
         cr.add (n.get (i));
       else // Kill a faster creature
         cr.add (n.get (creaturesPerGen - i - 1));

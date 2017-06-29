@@ -24,7 +24,7 @@ class Creature {
     Creature cr = new Creature (); // Return creature creation
     cr.nodes.clear (); // Clear the list of nodes (remove the automatic output Node)
     cr.nodes.ensureCapacity (nodes.size ()); // Size safety, maybe preventing crashes?
-    cr.connectors.ensureCapacity (connectors.size ()); // --,,--
+    cr.connectors.ensureCapacity (connectors.size ()); // --, , --
     cr.fitness = fitness; // Clone the fitness for skipping
     
     ArrayList<Node> dl = new ArrayList<Node> (nodes.size ()); // List of nodes already copied (local). Matching cloned nodes will be stored in cr.nodes
@@ -177,7 +177,7 @@ class Creature {
         removeConnector ();
       }
     }
-    cleanup();
+    cleanup ();
   }
   
   void cleanupUnusedNodes () {
@@ -238,16 +238,16 @@ class Creature {
       }
       
       if (a) {
-        sel.add(n);
+        sel.add (n);
       }
-      sel.add(n);
+      sel.add (n);
     }
     
     do {
       o = sel.get ((int) random (sel.size ()));
     } while (o.layer == 0); // Generate a new node if the layer of o is 0 (so that the new regular Node can be put between layer 0 (inclusive) and the output Node's layer (exclusive))
     
-    if (!(no instanceof ScreenNode)) {
+    if (! (no instanceof ScreenNode)) {
       no.layer = (int) random (o.layer); // Set the layer for the new node
       int i = 0;
       for (Node n : nodes) {
@@ -275,7 +275,7 @@ class Creature {
       return;
     
     for (int i = 0; i < 10; i++) { // Do at most 10 times.
-      Connector c = connectors.get((int) random (connectors.size()));
+      Connector c = connectors.get ((int) random (connectors.size ()));
       if (c.output.layer - c.input.layer > 1) { // There is room between the two nodes.
         Node n = new Node ((int) random (c.input.layer + 1, c.output.layer)); // Create a new Node between the two other Nodes.
         nodes.add (n);
@@ -342,7 +342,7 @@ class Creature {
       for (Connector co : n.o) // Remove all Connectors coming from this Node from the list of Connectors
         connectors.remove (connectors.indexOf (co));
       
-      nodes.remove(index); // Remove the Node from the list of all Nodes
+      nodes.remove (index); // Remove the Node from the list of all Nodes
       
     } else { // Some incoming Connectors: transfer all of the output Connectors to a random Connector's input (or the only one's, if there is only one), delete the other inputs
       
@@ -360,7 +360,7 @@ class Creature {
         co.input.o.remove (co.input.o.indexOf (co));
       }
       
-      nodes.remove(index); // Remove the removed Node from the list of all Nodes
+      nodes.remove (index); // Remove the removed Node from the list of all Nodes
     }
   }
   
@@ -463,9 +463,9 @@ class Creature {
     ScreenNode sn = scn.get ((int) random (scn.size ()));
     
     if (sn.type == 2)
-      sn.type = (int) random(2);
+      sn.type = (int) random (2);
     else
-      sn.type = (random(3) < 2f)? 1 - sn.type : 2;
+      sn.type = (random (3) < 2f)? 1 - sn.type : 2;
   }
   
   void changeConnectorType () {
@@ -516,7 +516,7 @@ class Creature {
     }
   }
   
-  void removeConnector() {
+  void removeConnector () {
     if (connectors.size () == 0)
       return;
     Connector c = connectors.get ((int) random (connectors.size ()));
@@ -555,7 +555,7 @@ class Creature {
               b = (int) random (nodes.size ());
             } while (nodes.get (b).layer == 10);
             
-            Connector co = new Connector(n, random (1) < 0.5f);
+            Connector co = new Connector (n, random (1) < 0.5f);
             co.input = nodes.get (b);
             co.outputOne = random (1) < 0.5f;
             nodes.get (b).o.add (co);
@@ -570,7 +570,7 @@ class Creature {
           c = true;
           boolean a = true;
           while (a) {
-            Node b = nodes.get((int) random (nodes.size ()));
+            Node b = nodes.get ((int) random (nodes.size ()));
             if (b.layer > n.layer) {
               a = false;
               Connector co = new Connector (b, random (1) < 0.5f);
@@ -585,27 +585,27 @@ class Creature {
             Connector co = n.o.get (i);
             if (co == null || co.output == null) {
               c = true;
-              n.o.remove(i);
+              n.o.remove (i);
             } else if (co.input != n) { // Connector isn't referencing itself back to the Node (or is referencing to another Node, which is much worse). Also, this shouldn't happen.
               c = true;
               int a = 0;
               for (Node no : nodes) { // Count the references just to be sure.
-                if (no.o.indexOf(co) != -1) // Connector is marked in the output list of the node
+                if (no.o.indexOf (co) != -1) // Connector is marked in the output list of the node
                   a++;
               }
               
               if (a == 0) { // Ughhhhhh - There should be at least one reference (the current iterating Node n)
-                println("Warning: code not working properly in dereferenced connectors (0 references to a detected faulty connector). Deleting connector.");
+                println ("Warning: code not working properly in dereferenced connectors (0 references to a detected faulty connector). Deleting connector.");
                 if (connectors.indexOf (co) != -1) { // Can't trust this connector any more - maybe it was deleted??
                   connectors.remove (connectors.indexOf (co)); // Remove the Connecor
                 }
               } else if (a == 1) { // Ok, there is just a random dereference. We can work around it here
-                println("Warning: connector / node dereference: connector does not reference the only node that has it as its output. Fixing.");
+                println ("Warning: connector / node dereference: connector does not reference the only node that has it as its output. Fixing.");
                 co.input = n; // Fix the reference
               } else { // More than one reference?? Let's just delete the connector and let the cleanup figure this out
-                println("Warning: connector / node dereference: connector referenced by " + a + " nodes (forgot to remove output reference from Node?). Deleting connector.");
+                println ("Warning: connector / node dereference: connector referenced by " + a + " nodes (forgot to remove output reference from Node?). Deleting connector.");
                 for (Node no : nodes) {
-                  if (no.o.indexOf(co) != -1) // Connector is marked in the output list of the node
+                  if (no.o.indexOf (co) != -1) // Connector is marked in the output list of the node
                     no.o.remove (no.o.indexOf (co)); // Remove the connector from the list
                 }
                 
@@ -622,7 +622,7 @@ class Creature {
         Connector co = connectors.get (i);
         if (co == null || co.output == null || co.input == null) { // Invalid Connector (after main Node / Connector fixing)
           c = true;
-          connectors.remove(i);
+          connectors.remove (i);
         } else if (co.input.layer >= co.output.layer) {
           println ("Warning: invalid connector: connector not following feed-forward. Deleting connector...");
           throw new NullPointerException ();
@@ -630,7 +630,7 @@ class Creature {
         } else {
           boolean a = true;
           for (Node n : nodes) { // See if this Connector is referenced
-            if (n.o.indexOf(co) != -1) {
+            if (n.o.indexOf (co) != -1) {
               a = false;
               break;
             }
@@ -638,8 +638,8 @@ class Creature {
           
           if (a) { // Connector isn't referenced by any Nodes, yet it has a valid input Node. Connect the two, I guess?
             c = true;
-            println("Warning: connector / node dereference: valid connector not referenced by any nodes. Fixing.");
-            co.input.o.add(co);
+            println ("Warning: connector / node dereference: valid connector not referenced by any nodes. Fixing.");
+            co.input.o.add (co);
           }
         }
       }
@@ -650,7 +650,7 @@ class Creature {
       printDebugOutput ();
     }
     
-    calculateNodeOffsets();
+    calculateNodeOffsets ();
   }
   
   void calculateNodeOffsets () {
@@ -670,7 +670,7 @@ class Creature {
       
       println ("Nodes:");
       for (Node n : nodes) {
-        print (nodes.indexOf(n) + " ");
+        print (nodes.indexOf (n) + " ");
         if (n instanceof ScreenNode) {
           println ("Screen node (" + ((ScreenNode) n).x + ", " + ((ScreenNode) n).y + "): type: " + ((ScreenNode) n).type + "; outputs to layer" + (n.o.size () > 1 ? "s:" : ((n.o.size () == 1)? " " + n.o.get (0).output.layer : " -")));
         } else {

@@ -238,14 +238,14 @@ void draw () {
   
   boolean a = false;
   
-  for(int i = drawIndex; i < obstacles.length; i ++) { 
+  for (int i = drawIndex; i < obstacles.length; i ++) { 
     
     Obstacle o = obstacles[i];
     
-    if(betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+    if (betweenIn (o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
       a = true;
-      if (betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
-        o.draw();
+      if (betweenIn (o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+        o.draw ();
     } else if (a) {
       break;
     }
@@ -311,7 +311,7 @@ void draw () {
   if (paused) {
     fill (100);
     textSize (24);
-    text ("Paused", (sizeX - textWidth("Paused")) / 2, height / 2 - 35, 120, 70);
+    text ("Paused", (sizeX - textWidth ("Paused")) / 2, height / 2 - 35, 120, 70);
   }
   
   drawSidebar ();
@@ -447,12 +447,12 @@ void doGenASAP () {
     } while (lazyEval && creatureId <= Generation.creaturesPerGen - 1 && currentGen.creatures[creatureId].fitness != 0);
     
     if (creatureId <= Generation.creaturesPerGen - 1) {
-      initRun();
+      initRun ();
     }
   }
   endGeneration ();
   creatureId = 0;
-  initRun();
+  initRun ();
 }
 
 void mouseClicked () {
@@ -536,12 +536,12 @@ void checkColl () {
   for (int i = drawIndex; i < obstacles.length; i ++) {
     Obstacle o = obstacles[i];
     
-    if (betweenIn(o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+    if (betweenIn (o.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
       if (!a) {
         a = true;
         drawIndex = i;
       }
-      if (!betweenIn(o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
+      if (!betweenIn (o.y, camY - height / 2 - obstacleSize / 2, camY + height + obstacleSize / 2))
         continue;
     } else {
       if (a)
@@ -583,7 +583,7 @@ void checkColl () {
       */
       
       if (prevY >= o.y + obstacleSize / 2 + playerSize / 2 && o.y + obstacleSize / 2 + playerSize / 2 > tempY) { // Only raise the player if the player was above the box and the current raise is below that of the obstacle
-        if (betweenIn(playerVelX * (abs (max(prevY, o.y) - min(prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
+        if (betweenIn (playerVelX * (abs (max (prevY, o.y) - min (prevY, o.y)) - playerSize / 2 - obstacleSize / 2) / playerVelY + prevX, o.x - obstacleSize / 2 - playerSize / 2, o.x + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on top of the box
           tempY = o.y + obstacleSize / 2 + playerSize / 2; // Raise the player
         }
       }
@@ -607,7 +607,7 @@ void checkColl () {
       }
     }*/
     
-    if (betweenIn(playerY - (playerY - prevY) * (abs (max(o.x, prevX) - min(o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
+    if (betweenIn (playerY - (playerY - prevY) * (abs (max (o.x, prevX) - min (o.x, prevX)) - obstacleSize / 2 - playerSize / 2) / playerVelX, o.y - obstacleSize / 2 - playerSize / 2, o.y + obstacleSize / 2 + playerSize / 2)) { // Check whether the player landed on the side of the box
       kill ();
       return;
     }
@@ -758,7 +758,7 @@ void drawSingle (ArrayList<Creature> creatures) {
   }
   
   for (float i = 20f + 0.05f * ((float) (sidebarWidth / 2 - 42)); i < sidebarWidth / 2 - 22; i += 0.05f * ((float) (sidebarWidth / 2 - 42))) {
-    if (round (i * 10) == round((0.5f * ((float) (sidebarWidth / 2 - 42)) + 20f) * 10)) {
+    if (round (i * 10) == round ((0.5f * ((float) (sidebarWidth / 2 - 42)) + 20f) * 10)) {
       singleGraphics.stroke (100);
       singleGraphics.line (round (i), 20, round (i), 280);
       singleGraphics.stroke (200);
@@ -774,7 +774,7 @@ void drawSingle (ArrayList<Creature> creatures) {
   /*int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
   
   for (int i = 20; i < sidebarWidth / 2 - 21; i ++) {
-    int k = 280 - round (2.6f * (((float) creatures.get (round ((((float) i) - 20f) / ((float) (sidebarWidth / 2 - 21)) * ((float)(creatures.size () - 1)))).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
+    int k = 280 - round (2.6f * (((float) creatures.get (round ((((float) i) - 20f) / ((float) (sidebarWidth / 2 - 21)) * ((float) (creatures.size () - 1)))).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
     
     if (k > 280) {
       singleGraphics.line (i, j, i, 280);
@@ -791,10 +791,10 @@ void drawSingle (ArrayList<Creature> creatures) {
   int j = 280 - round (2.6f * (((float) creatures.get (0).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
   int px = 20;
   
-  for(int i = 0; i < creatures.size (); i ++) {
+  for (int i = 0; i < creatures.size (); i ++) {
     int k = 280 - round (2.6f * (((float) creatures.get (i).fitness) / ((float) endX) * 100f - ((float) (max - 100 / density))) * density);
     
-    int x = round((((float) i) / ((float) (creatures.size () - 1)) * ((float)(sidebarWidth / 2 - 41)))) + 20;
+    int x = round ((((float) i) / ((float) (creatures.size () - 1)) * ((float) (sidebarWidth / 2 - 41)))) + 20;
     if (k > 280) {
       singleGraphics.line (px, j, x, 280);
       break;
@@ -830,7 +830,7 @@ void drawGens () {
   int density = (max * 100 / endX > 25 ? (max * 100 / endX > 50 ? 4 : 2) : 1);
   
   for (int i = density; i <= max * 100 / endX; i += density) {
-    int h = 280 - ceil (((float) i) * 260f / ((float)(max * 100 / endX)));
+    int h = 280 - ceil (((float) i) * 260f / ((float) (max * 100 / endX)));
     genGraphics.line (20, h, sidebarWidth / 2 - 21, h);
     
     genGraphics.text (i + "%", 0, h + 4);

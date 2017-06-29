@@ -37,7 +37,7 @@ class ScreenNode extends Node {
       
       Obstacle ob = obstacles[i];
       
-      if (betweenIn(ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
+      if (betweenIn (ob.x, camX - obstacleSize / 2, camX + width + obstacleSize / 2)) {
         a = true;
         
         if (pointInBoxIn (x + camX, y + camY - (height - floorLevel), ob.x - obstacleSize / 2, ob.y, ob.x + obstacleSize / 2, ob.y + obstacleSize) && ((type == 2)? true : ob.triangle == (type == 1))) {
@@ -76,7 +76,7 @@ class ScreenNode extends Node {
         break;
         
       case 2: // Both detector & last value false
-        fill (0, 100,0);
+        fill (0, 100, 0);
         break;
       
       case 5: // Both detector & last value true
